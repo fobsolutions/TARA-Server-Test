@@ -29,7 +29,8 @@ Parameetrite kirjeldus:
 | test.tara.jwksUrl | /oidc/jwks | TARA OpenID Connect avaliku võtme otspunkt. |
 | test.tara.authorizeUrl | /oidc/authorize | TARA autentimise alustamise otspunkt. |
 | test.tara.tokenUrl | /oidc/token | TARA tokeni otspunkt. |
-| test.tara.loginUrl | /login | Tara sisse logimise otspunkt. |
+| test.tara.loginUrl | /login | TARA sisse logimise otspunkt. |
+| test.tara.configurationUrl | /oidc/.well-known/openid-configuration | TARA konfiguratsiooni otspunkt. |
 
 4. Käivita testid:
 

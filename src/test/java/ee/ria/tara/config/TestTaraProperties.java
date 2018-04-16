@@ -30,7 +30,16 @@ public class TestTaraProperties {
     private String tokenUrl;
     private String loginUrl;
     private String serviceUrl;
+    private String configurationUrl;
     private String casClientId;
+
+    public String getConfigurationUrl() {
+        return configurationUrl;
+    }
+
+    public void setConfigurationUrl(String configurationUrl) {
+        this.configurationUrl = configurationUrl;
+    }
 
     public String getClientSecret() {
         return clientSecret;

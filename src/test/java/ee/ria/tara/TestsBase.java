@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.text.ParseException;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,6 +49,7 @@ public abstract class TestsBase {
     protected TestTaraProperties testTaraProperties;
 
     protected JWKSet jwkSet;
+    protected String tokenIssuer;
     protected CookieFilter cookieFilter;
 
     @Before
@@ -58,9 +60,20 @@ public abstract class TestsBase {
 
         jwkSet = JWKSet.load(new URL(testTaraProperties.getFullJwksUrl()));
 
+        tokenIssuer = getIssuer(testTaraProperties.getTargetUrl()+testTaraProperties.getConfigurationUrl());
         Security.addProvider(new BouncyCastleProvider());
         InitializationService.initialize();
         cookieFilter = new CookieFilter();
+    }
+
+    private String getIssuer(String url) {
+        return given()
+//                .log().all()
+                .when()
+                .get(url)
+                .then()
+//                .log().all()
+                .extract().response().getBody().jsonPath().getString("issuer");
     }
 
     protected String authenticateWithMobileId(String mobileNo, String idCode) throws InterruptedException, URISyntaxException {
@@ -196,7 +209,23 @@ public abstract class TestsBase {
     protected SignedJWT verifyTokenAndReturnSignedJwtObject(String token) throws ParseException, JOSEException {
         SignedJWT signedJWT =  SignedJWT.parse(token);
         if (isTokenSignatureValid(signedJWT)) {
-            return signedJWT;
+            if (signedJWT.getJWTClaimsSet().getAudience().get(0).equals(testTaraProperties.getClientId())) {
+                if (signedJWT.getJWTClaimsSet().getIssuer().equals(tokenIssuer)) {
+                    Date date = new Date();
+                    if (date.after(signedJWT.getJWTClaimsSet().getNotBeforeTime()) && date.before(signedJWT.getJWTClaimsSet().getExpirationTime())) {
+                        return signedJWT;
+                    }
+                    else {
+                        throw new RuntimeException("Token validity period is not valid! current: " + date + " nbf: "+signedJWT.getJWTClaimsSet().getNotBeforeTime()+" exp: "+signedJWT.getJWTClaimsSet().getExpirationTime());
+                    }
+                }
+                else {
+                    throw new RuntimeException("Token Issuer is not valid! Expected: "+tokenIssuer+" actual: "+signedJWT.getJWTClaimsSet().getIssuer());
+                }
+            }
+            else {
+                throw new RuntimeException("Token Audience is not valid! Expected: "+testTaraProperties.getClientId()+" actual: "+signedJWT.getJWTClaimsSet().getAudience().get(0));
+            }
         }
         else {
             throw new RuntimeException("Token Signature is not valid!");
