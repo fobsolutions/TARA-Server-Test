@@ -97,7 +97,7 @@ public abstract class TestsBase {
                 .extract().response()
                 .htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
 
-        String location = pollForAuthentication(execution2, 7200);
+        String location = pollForAuthentication(execution2, 2000);
 
         return getAuthorizationCode(location);
     }
@@ -268,11 +268,11 @@ public abstract class TestsBase {
 //                    .queryParam("client_name", testTaraProperties.getCasClientId())
                     .queryParam("client_id", testTaraProperties.getClientId())
                     .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
-                .log().all()
+//                .log().all()
                     .when()
                     .post(testTaraProperties.getLoginUrl())
                     .then()
-                .log().all()
+//                .log().all()
                     .extract().response();
             if (response.statusCode() == 302) {
                 return response.getHeader("location");
