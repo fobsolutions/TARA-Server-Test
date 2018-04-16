@@ -1,7 +1,6 @@
 package ee.ria.tara;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.*;
 import com.nimbusds.jwt.SignedJWT;
@@ -10,9 +9,11 @@ import ee.ria.tara.config.TestConfiguration;
 import ee.ria.tara.utils.SystemPropertyActiveProfileResolver;
 import ee.ria.tara.config.TestTaraProperties;
 import io.restassured.filter.cookie.CookieFilter;
+import io.restassured.response.Response;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -55,7 +56,7 @@ public abstract class TestsBase {
         port = url.getPort();
         baseURI = url.getProtocol() + "://" + url.getHost();
 
-        jwkSet = JWKSet.load(new URL(testTaraProperties.getJwksUrl()));
+        jwkSet = JWKSet.load(new URL(testTaraProperties.getFullJwksUrl()));
 
         Security.addProvider(new BouncyCastleProvider());
         InitializationService.initialize();
@@ -71,8 +72,8 @@ public abstract class TestsBase {
                 .formParam("mobileNumber", mobileNo)
                 .formParam("moblang", "et")
                 .formParam("principalCode", idCode)
-                .queryParam("service", testTaraProperties.getServiceUrl())
-                .queryParam("client_name", testTaraProperties.getCasClientId())
+//                .queryParam("service", testTaraProperties.getServiceUrl())
+//                .queryParam("client_name", testTaraProperties.getCasClientId())
                 .queryParam("client_id", testTaraProperties.getClientId())
                 .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
 //                .log().all()
@@ -83,25 +84,7 @@ public abstract class TestsBase {
                 .extract().response()
                 .htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
 
-        Thread.sleep(7500);
-
-        String location = given()
-                .filter(cookieFilter)
-                .relaxedHTTPSValidation()
-                .redirects().follow(false)
-                .formParam("execution", execution2)
-                .formParam("_eventId", "check")
-                .queryParam("service", testTaraProperties.getServiceUrl())
-                .queryParam("client_name", testTaraProperties.getCasClientId())
-                .queryParam("client_id", testTaraProperties.getClientId())
-                .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
-//                .log().all()
-                .when()
-                .post(testTaraProperties.getLoginUrl())
-                .then()
-//                .log().all()
-                .extract().response()
-                .getHeader("location");
+        String location = pollForAuthentication(execution2, 7200);
 
         return getAuthorizationCode(location);
     }
@@ -229,8 +212,8 @@ public abstract class TestsBase {
                 .formParam("mobileNumber", mobileNo)
                 .formParam("moblang", "et")
                 .formParam("principalCode", idCode)
-                .queryParam("service", testTaraProperties.getServiceUrl())
-                .queryParam("client_name", testTaraProperties.getCasClientId())
+//                .queryParam("service", testTaraProperties.getServiceUrl())
+//                .queryParam("client_name", testTaraProperties.getCasClientId())
                 .queryParam("client_id", testTaraProperties.getClientId())
                 .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
 //                .log().all()
@@ -241,4 +224,32 @@ public abstract class TestsBase {
                 .extract().response()
                 .htmlPath().getString("**.findAll { it.@class=='error-box' }");
     }
+
+    protected String pollForAuthentication(String execution, Integer intervalMillis) throws InterruptedException {
+        DateTime endTime = new DateTime().plusMillis(intervalMillis*3 + 200);
+        while(new DateTime().isBefore(endTime)) {
+            Thread.sleep(intervalMillis);
+            Response response = given()
+                    .filter(cookieFilter)
+                    .relaxedHTTPSValidation()
+                    .redirects().follow(false)
+                    .formParam("execution", execution)
+                    .formParam("_eventId", "check")
+//                    .queryParam("service", testTaraProperties.getServiceUrl())
+//                    .queryParam("client_name", testTaraProperties.getCasClientId())
+                    .queryParam("client_id", testTaraProperties.getClientId())
+                    .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
+                .log().all()
+                    .when()
+                    .post(testTaraProperties.getLoginUrl())
+                    .then()
+                .log().all()
+                    .extract().response();
+            if (response.statusCode() == 302) {
+                return response.getHeader("location");
+            }
+        }
+        throw new RuntimeException("No MID response in: "+ (intervalMillis*3 + 200) +" millis");
+    }
+
 }

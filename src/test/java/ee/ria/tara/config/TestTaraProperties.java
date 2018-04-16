@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
-@ConfigurationProperties(prefix = "test.client")
+@ConfigurationProperties(prefix = "test.tara")
 public class TestTaraProperties {
 
     private String targetUrl;
@@ -102,6 +102,10 @@ public class TestTaraProperties {
 
     public void setJwksUrl(String jwksUrl) {
         this.jwksUrl = jwksUrl;
+    }
+
+    public String getFullJwksUrl() {
+        return targetUrl+jwksUrl;
     }
 
     public void setTargetUrl(String targetUrl) {
