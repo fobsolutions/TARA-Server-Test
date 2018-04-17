@@ -10,6 +10,8 @@ import ee.ria.tara.utils.SystemPropertyActiveProfileResolver;
 import ee.ria.tara.config.TestTaraProperties;
 import io.restassured.filter.cookie.CookieFilter;
 import io.restassured.response.Response;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -51,6 +53,8 @@ public abstract class TestsBase {
     protected JWKSet jwkSet;
     protected String tokenIssuer;
     protected CookieFilter cookieFilter;
+    protected String state;
+    protected String nonce;
 
     @Before
     public void setUp() throws IOException, InitializationException, ParseException {
@@ -103,14 +107,17 @@ public abstract class TestsBase {
     }
 
     protected String getAuthenticationMethodsPageAndGetExecution() {
+        state = RandomStringUtils.random(16);
+        nonce = RandomStringUtils.random(16);
+        String sha256Nonce = DigestUtils.sha256Hex(nonce);
         String location = given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .queryParam("scope", "openid")
                 .queryParam("response_type", "code")
                 .queryParam("client_id", testTaraProperties.getClientId())
                 .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
-                .queryParam("state", "abcdefghijklmnop")
-                .queryParam("nonce", "qrstuvwxyzabcdef")
+                .queryParam("state", state)
+                .queryParam("nonce", sha256Nonce)
                 .queryParam("lang", "et")
                 .when()
                 .redirects().follow(false)
@@ -234,7 +241,7 @@ public abstract class TestsBase {
 
     protected String authenticateWithMobileIdError(String mobileNo, String idCode) {
         String execution = getAuthenticationMethodsPageAndGetExecution();
-        return  given()
+        String error =  given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("execution", execution)
                 .formParam("_eventId", "submit")
@@ -249,9 +256,37 @@ public abstract class TestsBase {
                 .when()
                 .post(testTaraProperties.getLoginUrl())
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response()
                 .htmlPath().getString("**.findAll { it.@class=='error-box' }");
+        error = error.substring(4);
+        return error;
+    }
+
+    protected String authenticateWithMobileIdPollError(String mobileNo, String idCode, Integer pollMillis) throws InterruptedException, URISyntaxException {
+        String execution = getAuthenticationMethodsPageAndGetExecution();
+        String execution2 = given()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("execution", execution)
+                .formParam("_eventId", "submit")
+                .formParam("mobileNumber", mobileNo)
+                .formParam("moblang", "et")
+                .formParam("principalCode", idCode)
+//                .queryParam("service", testTaraProperties.getServiceUrl())
+//                .queryParam("client_name", testTaraProperties.getCasClientId())
+                .queryParam("client_id", testTaraProperties.getClientId())
+                .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
+//                .log().all()
+                .when()
+                .post(testTaraProperties.getLoginUrl())
+                .then()
+//                .log().all()
+                .extract().response()
+                .htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+
+        String error = pollForError(execution2, pollMillis).htmlPath().getString("**.findAll { it.@class=='error-box' }");
+        error = error.substring(4);
+        return error;
     }
 
     protected String pollForAuthentication(String execution, Integer intervalMillis) throws InterruptedException {
@@ -279,6 +314,33 @@ public abstract class TestsBase {
             }
         }
         throw new RuntimeException("No MID response in: "+ (intervalMillis*3 + 200) +" millis");
+    }
+
+    protected Response pollForError(String execution, Integer intervalMillis) throws InterruptedException {
+        DateTime endTime = new DateTime().plusMillis(intervalMillis*3 + 200);
+        while(new DateTime().isBefore(endTime)) {
+            Thread.sleep(intervalMillis);
+            Response response = given()
+                    .filter(cookieFilter)
+                    .relaxedHTTPSValidation()
+                    .redirects().follow(false)
+                    .formParam("execution", execution)
+                    .formParam("_eventId", "check")
+//                    .queryParam("service", testTaraProperties.getServiceUrl())
+//                    .queryParam("client_name", testTaraProperties.getCasClientId())
+                    .queryParam("client_id", testTaraProperties.getClientId())
+                    .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
+//                .log().all()
+                    .when()
+                    .post(testTaraProperties.getLoginUrl())
+                    .then()
+//                .log().all()
+                    .extract().response();
+            if ((response.statusCode() != 302) & (response.statusCode() != 200)) {
+                return response;
+            }
+        }
+        throw new RuntimeException("No MID error response in: "+ (intervalMillis*3 + 200) +" millis");
     }
 
 }
