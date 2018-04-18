@@ -80,7 +80,7 @@ public abstract class TestsBase {
                 .extract().response().getBody().jsonPath().getString("issuer");
     }
 
-    protected String authenticateWithMobileId(String mobileNo, String idCode) throws InterruptedException, URISyntaxException {
+    protected String authenticateWithMobileId(String mobileNo, String idCode, Integer pollMillis) throws InterruptedException, URISyntaxException {
         String execution = getAuthenticationMethodsPageAndGetExecution();
         String execution2 = given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
@@ -97,27 +97,29 @@ public abstract class TestsBase {
                 .when()
                 .post(testTaraProperties.getLoginUrl())
                 .then()
-//                .log().all()
+                .log().all()
                 .extract().response()
                 .htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
 
-        String location = pollForAuthentication(execution2, 2000);
+        String location = pollForAuthentication(execution2, pollMillis);
 
         return getAuthorizationCode(location);
     }
 
     protected String getAuthenticationMethodsPageAndGetExecution() {
         state = RandomStringUtils.random(16);
+        String sha256StateBase64 = Base64.getEncoder().encodeToString(DigestUtils.sha256(state));
         nonce = RandomStringUtils.random(16);
-        String sha256Nonce = DigestUtils.sha256Hex(nonce);
+        String sha256NonceBase64 = Base64.getEncoder().encodeToString(DigestUtils.sha256(nonce));
         String location = given()
-                .filter(cookieFilter).relaxedHTTPSValidation()
+                .filter(cookieFilter)
+                .relaxedHTTPSValidation()
                 .queryParam("scope", "openid")
                 .queryParam("response_type", "code")
                 .queryParam("client_id", testTaraProperties.getClientId())
                 .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
-                .queryParam("state", state)
-                .queryParam("nonce", sha256Nonce)
+                .queryParam("state", sha256StateBase64)
+                .queryParam("nonce", sha256NonceBase64)
                 .queryParam("lang", "et")
                 .when()
                 .redirects().follow(false)
@@ -173,6 +175,11 @@ public abstract class TestsBase {
     }
 
     protected String getIdToken(String authorizationCode) {
+        Response response = postToTokenEndpoint(authorizationCode);
+        return response.getBody().jsonPath().getString("id_token");
+    }
+
+    protected Response postToTokenEndpoint(String authorizationCode) {
         return  given()
                 .relaxedHTTPSValidation()
                 .queryParam("grant_type", "authorization_code")
@@ -185,7 +192,7 @@ public abstract class TestsBase {
                 .post(testTaraProperties.getTokenUrl())
                 .then()
 //                .log().all()
-                .extract().response().getBody().jsonPath().getString("id_token");
+                .extract().response();
     }
 
     protected String getAuthorization(String id ,String secret) {
@@ -197,8 +204,12 @@ public abstract class TestsBase {
 
         Map<String, String> queryParams = params.stream().collect(
                 Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
-
-        return queryParams.get("code");
+        if (queryParams.get("state").equals(Base64.getEncoder().encodeToString(DigestUtils.sha256(state)))) {
+            return queryParams.get("code");
+        }
+        else {
+            throw new RuntimeException("State value do not match!");
+        }
     }
 
     protected Boolean isTokenSignatureValid(SignedJWT signedJWT) throws JOSEException {
@@ -220,7 +231,12 @@ public abstract class TestsBase {
                 if (signedJWT.getJWTClaimsSet().getIssuer().equals(tokenIssuer)) {
                     Date date = new Date();
                     if (date.after(signedJWT.getJWTClaimsSet().getNotBeforeTime()) && date.before(signedJWT.getJWTClaimsSet().getExpirationTime())) {
-                        return signedJWT;
+                        if (signedJWT.getJWTClaimsSet().getClaim("nonce").equals(Base64.getEncoder().encodeToString(DigestUtils.sha256(nonce)))) {
+                            return signedJWT;
+                        }
+                        else {
+                            throw new RuntimeException("Calculated nonce do not match the received one!");
+                        }
                     }
                     else {
                         throw new RuntimeException("Token validity period is not valid! current: " + date + " nbf: "+signedJWT.getJWTClaimsSet().getNotBeforeTime()+" exp: "+signedJWT.getJWTClaimsSet().getExpirationTime());

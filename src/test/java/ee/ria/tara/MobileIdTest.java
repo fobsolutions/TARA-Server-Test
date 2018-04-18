@@ -21,13 +21,24 @@ public class MobileIdTest extends TestsBase {
 
     @Test
     public void mobileIdAuthenticationSuccess() throws InterruptedException, URISyntaxException, ParseException, JOSEException {
-        String authorizationCode = authenticateWithMobileId("+37200000266", "60001019896");
+        String authorizationCode = authenticateWithMobileId("00000266", "60001019896", 2000);
         SignedJWT signedJWT = verifyTokenAndReturnSignedJwtObject(getIdToken(authorizationCode));
 
         assertEquals("EE60001019896", signedJWT.getJWTClaimsSet().getSubject());
         assertEquals("MARY ÄNN", signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("given_name"));
         assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("family_name"));
         assertEquals("+37200000266", signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("mobile_number"));
+    }
+
+    @Test
+    public void mobileIdAuthenticationSuccessWithRealLifeDelay() throws InterruptedException, URISyntaxException, ParseException, JOSEException {
+        String authorizationCode = authenticateWithMobileId("00000766", "60001019906", 7000);
+        SignedJWT signedJWT = verifyTokenAndReturnSignedJwtObject(getIdToken(authorizationCode));
+
+        assertEquals("EE60001019906", signedJWT.getJWTClaimsSet().getSubject());
+        assertEquals("MARY ÄNN", signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("given_name"));
+        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("family_name"));
+        assertEquals("+37200000766", signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("mobile_number"));
     }
 
     @Test
