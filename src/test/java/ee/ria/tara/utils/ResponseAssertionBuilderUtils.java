@@ -116,7 +116,7 @@ public class ResponseAssertionBuilderUtils extends ResponseBuilderBase {
         keyParams.setKeyInfoGenerator(keyInfoGenerator);
 
         DataEncryptionParameters encryptParams = new DataEncryptionParameters();
-        encryptParams.setAlgorithm(EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128);
+        encryptParams.setAlgorithm(EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256_GCM);
 
         Encrypter samlEncrypter = new Encrypter(encryptParams, keyParams);
         samlEncrypter.setKeyPlacement(Encrypter.KeyPlacement.INLINE);

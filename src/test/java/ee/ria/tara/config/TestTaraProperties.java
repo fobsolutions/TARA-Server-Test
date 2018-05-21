@@ -9,19 +9,14 @@ public class TestTaraProperties {
 
     private String targetUrl;
     private String targetSpUrl;
-    private String spMetadataUrl;
-    private String spStartUrl;
-    private String spReturnUrl;
     private String spProviderName;
-    private Integer acceptableTimeDiffMin;
     private String keystore;
     private String keystorePass;
     private String responseSigningKeyId;
     private String responseSigningKeyPass;
-    private String idpUrl;
-    private String idpMetadataUrl;
-    private String idpStartUrl;
-
+    private String eidasNodeUrl;
+    private String eidasNodeMetadataUrl;
+    private String eidasNodeResponseUrl;
     private String jwksUrl;
     private String testRedirectUri;
     private String clientId;
@@ -32,6 +27,30 @@ public class TestTaraProperties {
     private String serviceUrl;
     private String configurationUrl;
     private String casClientId;
+
+    public String getEidasNodeResponseUrl() {
+        return eidasNodeResponseUrl;
+    }
+
+    public void setEidasNodeResponseUrl(String eidasNodeResponseUrl) {
+        this.eidasNodeResponseUrl = eidasNodeResponseUrl;
+    }
+
+    public String getEidasNodeUrl() {
+        return eidasNodeUrl;
+    }
+
+    public void setEidasNodeUrl(String eidasNodeUrl) {
+        this.eidasNodeUrl = eidasNodeUrl;
+    }
+
+    public String getEidasNodeMetadataUrl() {
+        return eidasNodeMetadataUrl;
+    }
+
+    public void setEidasNodeMetadataUrl(String eidasNodeMetadataUrl) {
+        this.eidasNodeMetadataUrl = eidasNodeMetadataUrl;
+    }
 
     public String getConfigurationUrl() {
         return configurationUrl;
@@ -125,24 +144,8 @@ public class TestTaraProperties {
         this.targetSpUrl = targetSpUrl;
     }
 
-    public void setSpMetadataUrl(String spMetadataUrl) {
-        this.spMetadataUrl = spMetadataUrl;
-    }
-
-    public void setSpStartUrl(String spStartUrl) {
-        this.spStartUrl = spStartUrl;
-    }
-
-    public void setSpReturnUrl(String spReturnUrl) {
-        this.spReturnUrl = spReturnUrl;
-    }
-
     public void setSpProviderName(String spProviderName) {
         this.spProviderName = spProviderName;
-    }
-
-    public void setAcceptableTimeDiffMin(Integer acceptableTimeDiffMin) {
-        this.acceptableTimeDiffMin = acceptableTimeDiffMin;
     }
 
     public void setKeystore(String keystore) {
@@ -161,18 +164,6 @@ public class TestTaraProperties {
         this.responseSigningKeyPass = responseSigningKeyPass;
     }
 
-    public void setIdpUrl(String idpUrl) {
-        this.idpUrl = idpUrl;
-    }
-
-    public void setIdpMetadataUrl(String idpMetadataUrl) {
-        this.idpMetadataUrl = idpMetadataUrl;
-    }
-
-    public void setIdpStartUrl(String idpStartUrl) {
-        this.idpStartUrl = idpStartUrl;
-    }
-
     public String getTargetUrl() {
         return targetUrl;
     }
@@ -181,28 +172,8 @@ public class TestTaraProperties {
         return targetSpUrl;
     }
 
-    public String getSpMetadataUrl() {
-        return spMetadataUrl;
-    }
-
-    public String getFullSpMetadataUrl() {
-        return spMetadataUrl;
-    }
-
-    public String getSpStartUrl() {
-        return spStartUrl;
-    }
-
-    public String getSpReturnUrl() {
-        return spReturnUrl;
-    }
-
     public String getSpProviderName() {
         return spProviderName;
-    }
-
-    public Integer getAcceptableTimeDiffMin() {
-        return acceptableTimeDiffMin;
     }
 
     public String getKeystore() {
@@ -221,23 +192,7 @@ public class TestTaraProperties {
         return responseSigningKeyPass;
     }
 
-    public String getIdpUrl() {
-        return idpUrl;
-    }
-
-    public String getIdpMetadataUrl() {
-        return idpMetadataUrl;
-    }
-
-    public String getIdpStartUrl() {
-        return idpStartUrl;
-    }
-
-    public String getFullIdpMetadataUrl() {
-        return idpUrl + idpMetadataUrl;
-    }
-
-    public String getFullSpReturnUrl() {
-        return targetSpUrl + spReturnUrl;
+    public String getFullEidasNodeMetadataUrl() {
+        return eidasNodeUrl + eidasNodeMetadataUrl;
     }
 }

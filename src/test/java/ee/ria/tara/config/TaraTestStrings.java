@@ -2,9 +2,9 @@ package ee.ria.tara.config;
 
 public class TaraTestStrings {
     //SAML response strings
-    public static final String LOA_LOW = "http://tara.europa.eu/LoA/low";
-    public static final String LOA_SUBSTANTIAL = "http://tara.europa.eu/LoA/substantial";
-    public static final String LOA_HIGH = "http://tara.europa.eu/LoA/high";
+    public static final String LOA_LOW = "http://eidas.europa.eu/LoA/low";
+    public static final String LOA_SUBSTANTIAL = "http://eidas.europa.eu/LoA/substantial";
+    public static final String LOA_HIGH = "http://eidas.europa.eu/LoA/high";
     public static final String STATUS_SUCCESS = "urn:oasis:names:tc:SAML:2.0:status:Success";
     public static final String ISSUER_FORMAT = "urn:oasis:names:tc:SAML:2.0:nameid-format:entity";
     public static final String SUBJECT_CONFIRMATION_METHOD_SENDER_VOUCHES = "urn:oasis:names:tc:SAML:2.0:cm:sender-vouches";
@@ -48,5 +48,8 @@ public class TaraTestStrings {
     public static final String DEFATTR_LEGAL_PNO = "292938483902";
 
     //OpenID Connect string
+    public static final String OIDC_AMR_MID = "mID";
+    public static final String OIDC_AMR_IDC = "idcard";
+    public static final String OIDC_AMR_EIDAS = "eIDAS ";
 
 }
