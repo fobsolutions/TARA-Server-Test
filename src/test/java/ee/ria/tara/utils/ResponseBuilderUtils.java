@@ -57,6 +57,21 @@ public class ResponseBuilderUtils extends ResponseAssertionBuilderUtils {
         }
     }
 
+    public Response buildAuthnResponseWithMaxLegalAttributes(Credential signCredential, Credential encCredential, String inResponseId, String recipient, String loa, String givenName, String familyName, String personIdentifier, String dateOfBirth, String legalName, String legalPno, String issuerValue, Integer acceptableTimeMin, String audienceUri, String legalAddress, String vatRegistration, String taxReference, String lei, String eori, String seed, String sic, String d201217EuIdendifier) {
+        try {
+            Signature signature = prepareSignature(signCredential);
+            DateTime timeNow = new DateTime();
+            Response authnResponse = buildResponseForSigningWithoutAssertion(inResponseId, recipient, timeNow, issuerValue);
+            authnResponse.getEncryptedAssertions().add(buildEncrAssertionWithMaxLegal(signCredential, encCredential, inResponseId, recipient, timeNow, acceptableTimeMin, loa, givenName, familyName, personIdentifier, dateOfBirth, legalName, legalPno, issuerValue, audienceUri, legalAddress, vatRegistration, taxReference, lei, eori, seed, sic, d201217EuIdendifier));
+            authnResponse.setSignature(signature);
+            XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
+            Signer.signObject(signature);
+            return authnResponse;
+        } catch (Exception e) {
+            throw new RuntimeException("SAML error:" + e.getMessage(), e);
+        }
+    }
+
     public Response buildAuthnResponseWithUnsignedAssertions(Credential signCredential, Credential encCredential, String inResponseId, String recipient, String loa, String givenName, String familyName, String personIdentifier, String dateOfBirth, String issuerValue, Integer acceptableTimeMin, String audienceUri) {
         try {
             Signature signature = prepareSignature(signCredential);
@@ -167,7 +182,7 @@ public class ResponseBuilderUtils extends ResponseAssertionBuilderUtils {
         }
     }
 
-    public Response buildAuthnResponseWithError(Credential signCredential, String inResponseId, String recipient, String error, String issuerValue, Integer acceptableTimeMin, String audienceUri) {
+    public Response buildAuthnResponseWithError(Credential signCredential, String inResponseId, String recipient, String error, String issuerValue, Integer acceptableTimeMin, String audienceUri, String loa) {
         try {
             Signature signature = prepareSignature(signCredential);
             DateTime timeNow = new DateTime();
@@ -180,7 +195,7 @@ public class ResponseBuilderUtils extends ResponseAssertionBuilderUtils {
             authnResponse.setSignature(signature);
             authnResponse.setStatus(buildErrorStatus(error));
             authnResponse.setIssuer(buildIssuer(issuerValue));
-            authnResponse.getAssertions().add(buildAssertion(inResponseId, recipient, timeNow, acceptableTimeMin, null, "EE/EE/33232", issuerValue, audienceUri));
+            authnResponse.getAssertions().add(buildAssertion(inResponseId, recipient, timeNow, acceptableTimeMin, loa, "EE/EE/33232", issuerValue, audienceUri));
 
             XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
             Signer.signObject(signature);
@@ -356,8 +371,8 @@ public class ResponseBuilderUtils extends ResponseAssertionBuilderUtils {
             DateTime timeNow = new DateTime();
             Response authnResponse = buildResponseForSigningWithoutAssertion(inResponseId, recipient, timeNow, issuerValue);
             authnResponse.getEncryptedAssertions().add(buildEncrAssertionNameIdCnt(nameIdCnt, nameIdFormat, signCredential, encCredential, inResponseId, recipient, timeNow, acceptableTimeMin, loa, givenName, familyName, personIdentifier, dateOfBirth, issuerValue, audienceUri));
-            XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
             authnResponse.setSignature(signature);
+            XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
             Signer.signObject(signature);
             return authnResponse;
         } catch (Exception e) {

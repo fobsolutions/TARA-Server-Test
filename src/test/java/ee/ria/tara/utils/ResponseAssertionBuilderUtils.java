@@ -45,7 +45,17 @@ public class ResponseAssertionBuilderUtils extends ResponseBuilderBase {
 
     protected EncryptedAssertion buildEncrAssertionWithMaxAttributes(Credential signCredential, Credential encCredential, String inResponseId, String recipient, DateTime issueInstant, Integer acceptableTimeMin, String loa, String givenName, String familyName, String personIdentifier, String dateOfBirth, String birthName, String birthPlace, String address, String gender, String issuerValue, String audienceUri) throws SecurityException, SignatureException, MarshallingException, EncryptionException {
         Signature signature = prepareSignature(signCredential);
-        Assertion assertion = buildMaximumAssertionForSigning(inResponseId, recipient, issueInstant, acceptableTimeMin, loa, givenName, familyName, personIdentifier, dateOfBirth, birthName, birthPlace, address, gender, issuerValue, audienceUri);
+        Assertion assertion = buildMaximumAssertionForSigning(inResponseId, recipient ,issueInstant, acceptableTimeMin, loa, givenName, familyName, personIdentifier, dateOfBirth, birthName, birthPlace, address, gender, issuerValue, audienceUri);
+        assertion.setSignature(signature);
+        XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(assertion).marshall(assertion);
+        Signer.signObject(signature);
+
+        return encryptAssertion(assertion, encCredential);
+    }
+
+    protected EncryptedAssertion buildEncrAssertionWithMaxLegal(Credential signCredential, Credential encCredential, String inResponseId, String recipient, DateTime issueInstant, Integer acceptableTimeMin, String loa, String givenName, String familyName, String personIdentifier, String dateOfBirth, String legalName, String legalPno, String issuerValue, String audienceUri, String legalAddress, String vatRegistration, String taxReference, String lei, String eori, String seed, String sic, String d201217EuIdendifier) throws SecurityException, SignatureException, MarshallingException, EncryptionException {
+        Signature signature = prepareSignature(signCredential);
+        Assertion assertion = buildMaxLegalAssertionForSigning(inResponseId, recipient ,issueInstant, acceptableTimeMin, loa, givenName, familyName, personIdentifier, dateOfBirth, legalName, legalPno, issuerValue, audienceUri, legalAddress, vatRegistration, taxReference, lei, eori, seed, sic, d201217EuIdendifier);
         assertion.setSignature(signature);
         XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(assertion).marshall(assertion);
         Signer.signObject(signature);
@@ -76,6 +86,19 @@ public class ResponseAssertionBuilderUtils extends ResponseBuilderBase {
         assertion.setConditions(buildConditions(audienceUri, issueInstant, acceptableTimeMin));
         assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, loa));
         assertion.getAttributeStatements().add(buildMinimalAttributeStatementWithLegalPerson(givenName, familyName, personIdentifier, dateOfBirth, legalName, legalPno));
+        return assertion;
+    }
+
+    protected Assertion buildMaxLegalAssertionForSigning(String inResponseId, String recipient, DateTime issueInstant, Integer acceptableTimeMin, String loa, String givenName, String familyName, String personIdentifier, String dateOfBirth, String legalName, String legalPno, String issuerValue, String audienceUri, String legalAddress, String vatRegistration, String taxReference, String lei, String eori, String seed, String sic, String d201217EuIdendifier) {
+        Assertion assertion = new AssertionBuilder().buildObject();
+        assertion.setIssueInstant(issueInstant);
+        assertion.setID(OpenSAMLUtils.generateSecureRandomId());
+        assertion.setVersion(SAMLVersion.VERSION_20);
+        assertion.setIssuer(buildIssuer(issuerValue));
+        assertion.setSubject(buildSubject(inResponseId, recipient, issueInstant, acceptableTimeMin, personIdentifier));
+        assertion.setConditions(buildConditions(audienceUri, issueInstant, acceptableTimeMin));
+        assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant,loa));
+        assertion.getAttributeStatements().add(buildMaximalAttributeStatementWithLegalPerson(givenName, familyName, personIdentifier, dateOfBirth, legalName, legalPno, legalAddress, vatRegistration, taxReference, lei, eori, seed, sic, d201217EuIdendifier));
         return assertion;
     }
 
@@ -170,11 +193,11 @@ public class ResponseAssertionBuilderUtils extends ResponseBuilderBase {
             assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, loa));
         } else if (cnt == 2) {
             assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, loa));
-            assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, "http://tara.europa.eu/LoA/low"));
+            assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, "http://eidas.europa.eu/LoA/low"));
         } else if (cnt == 3) {
             assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, loa));
-            assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, "http://tara.europa.eu/LoA/low"));
-            assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, "http://tara.europa.eu/LoA/high"));
+            assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, "http://eidas.europa.eu/LoA/low"));
+            assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, "http://eidas.europa.eu/LoA/high"));
         }
         assertion.getAttributeStatements().add(buildMinimalAttributeStatement(givenName, familyName, personIdentifier, dateOfBirth));
         assertion.setSignature(signature);
@@ -250,7 +273,7 @@ public class ResponseAssertionBuilderUtils extends ResponseBuilderBase {
             assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, loa));
         } else if (cnt == 2) {
             assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, loa));
-            assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, "http://tara.europa.eu/LoA/low"));
+            assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, "http://eidas.europa.eu/LoA/low"));
         }
         assertion.getAttributeStatements().add(buildMinimalAttributeStatement(givenName, familyName, personIdentifier, dateOfBirth));
         assertion.setSignature(signature);
@@ -340,7 +363,12 @@ public class ResponseAssertionBuilderUtils extends ResponseBuilderBase {
             subject.getSubjectConfirmations().add(subjectConf);
             SubjectConfirmation subjectConf2 = new SubjectConfirmationBuilder().buildObject();
             subjectConf2.setMethod(subjectConfMethod);
-            subjectConf2.setSubjectConfirmationData(subConfData);
+            SubjectConfirmationData subConfData2 = new SubjectConfirmationDataBuilder().buildObject();
+            subConfData2.setAddress("172.24.0.1"); //TODO: this needs to be configurable probably
+            subConfData2.setInResponseTo(inResponseId);
+            subConfData2.setNotOnOrAfter(issueInstant.plusMinutes(acceptableTimeMin));
+            subConfData2.setRecipient(recipient);
+            subjectConf2.setSubjectConfirmationData(subConfData2);
             subject.getSubjectConfirmations().add(subjectConf2);
             assertion.setSubject(subject);
         }

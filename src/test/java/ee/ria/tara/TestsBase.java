@@ -129,14 +129,13 @@ public abstract class TestsBase {
         return given()
                 .config(config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .get(testTaraProperties.getFullEidasNodeMetadataUrl())
+                .get(testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl())
                 .then()
                 .log().ifError()
                 .statusCode(200)
                 .extract()
                 .body().asString();
     }
-
 
     private String getIssuer(String url) {
         return given()
@@ -148,8 +147,8 @@ public abstract class TestsBase {
                 .extract().response().getBody().jsonPath().getString("issuer");
     }
 
-    protected String authenticateWithMobileId(String mobileNo, String idCode, Integer pollMillis) throws InterruptedException, URISyntaxException {
-        String execution = getAuthenticationMethodsPageAndGetExecution();
+    protected String authenticateWithMobileId(String mobileNo, String idCode, Integer pollMillis, String scope) throws InterruptedException, URISyntaxException {
+        String execution = getAuthenticationMethodsPage(scope).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
         String execution2 = given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("execution", execution)
@@ -174,15 +173,9 @@ public abstract class TestsBase {
         return getAuthorizationCode(location);
     }
 
-    protected String authenticateWithEidas(String personCountry) throws URISyntaxException {
-        String execution = getAuthenticationMethodsPageAndGetExecution();
-        Response response = getEidasSamlRequest(personCountry, execution);
-        String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
-
-        //Here we need to simulate a response from foreign country eIDAS Node
-        String samlResponse = getBase64SamlResponseMinimalAttributes(response.getBody().asString(), DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO, DEFATTR_DATE, LOA_LOW);
-
-        return getAuthorizationCode(returnEidasResponse(samlResponse, relayState));
+    protected Response initiateEidasAuthentication(String personCountry, String scope) {
+        String execution = getAuthenticationMethodsPage(scope).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+        return getEidasSamlRequest(personCountry, execution);
     }
 
     protected Response getEidasSamlRequest(String personCountry, String execution) {
@@ -225,11 +218,11 @@ public abstract class TestsBase {
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("RelayState", relayState)
                 .formParam("SAMLResponse", samlResponse)
-                //          .log().all()
+                .log().all()
                 .when()
                 .post(testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl())
                 .then()
-                //         .log().all()
+                .log().all()
                 .extract().response();
 
         samlResponse = response.htmlPath().getString("**.findAll { it.@name == 'SAMLResponse' }[0].@value");
@@ -240,15 +233,43 @@ public abstract class TestsBase {
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("RelayState", relayState)
                 .formParam("SAMLResponse", samlResponse)
-                //         .log().all()
+                .log().all()
                 .when()
                 .post(url)
                 .then()
-                //        .log().all()
+                .log().all()
                 .extract().header("location");
     }
 
-    protected String getAuthenticationMethodsPageAndGetExecution() {
+    protected Response returnEidasErrorResponse(String samlResponse, String relayState) {
+        Response response = given()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("RelayState", relayState)
+                .formParam("SAMLResponse", samlResponse)
+                .log().all()
+                .when()
+                .post(testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl())
+                .then()
+                .log().all()
+                .extract().response();
+
+        samlResponse = response.htmlPath().getString("**.findAll { it.@name == 'SAMLResponse' }[0].@value");
+        relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
+        String url = response.htmlPath().getString("**.findAll { it.@method == 'post' }[0].@action");
+
+        return given()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("RelayState", relayState)
+                .formParam("SAMLResponse", samlResponse)
+                .log().all()
+                .when()
+                .post(url)
+                .then()
+                .log().all()
+                .extract().response();
+    }
+
+    protected Response getAuthenticationMethodsPage(String scope) {
         state = RandomStringUtils.random(16);
         String sha256StateBase64 = Base64.getEncoder().encodeToString(DigestUtils.sha256(state));
         nonce = RandomStringUtils.random(16);
@@ -256,7 +277,7 @@ public abstract class TestsBase {
         String location = given()
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
-                .queryParam("scope", "openid")
+                .queryParam("scope", scope)
                 .queryParam("response_type", "code")
                 .queryParam("client_id", testTaraProperties.getClientId())
                 .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
@@ -265,10 +286,10 @@ public abstract class TestsBase {
                 .queryParam("lang", "et")
                 .when()
                 .redirects().follow(false)
-//                .log().all()
+                .log().all()
                 .get(testTaraProperties.getAuthorizeUrl())
                 .then()
-//                .log().all()
+                .log().all()
                 .extract().response()
                 .getHeader("location");
 
@@ -278,12 +299,11 @@ public abstract class TestsBase {
                 .when()
                 .redirects().follow(false)
                 .urlEncodingEnabled(false)
-//                .log().all()
+                .log().all()
                 .get(location)
                 .then()
-//                .log().all()
-                .extract().response()
-                .getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+                .log().all()
+                .extract().response();
     }
 
     protected String getAuthorizationCode(String url) throws URISyntaxException {
@@ -398,7 +418,7 @@ public abstract class TestsBase {
     }
 
     protected String authenticateWithMobileIdError(String mobileNo, String idCode) {
-        String execution = getAuthenticationMethodsPageAndGetExecution();
+        String execution = getAuthenticationMethodsPage(OIDC_DEF_SCOPE).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
         String error =  given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("execution", execution)
@@ -422,7 +442,7 @@ public abstract class TestsBase {
     }
 
     protected String authenticateWithMobileIdPollError(String mobileNo, String idCode, Integer pollMillis) throws InterruptedException, URISyntaxException {
-        String execution = getAuthenticationMethodsPageAndGetExecution();
+        String execution = getAuthenticationMethodsPage(OIDC_DEF_SCOPE).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
         String execution2 = given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("execution", execution)
@@ -507,7 +527,37 @@ public abstract class TestsBase {
             loa =  xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
         }
         org.opensaml.saml.saml2.core.Response response = new ResponseBuilderUtils().buildAuthnResponse(signatureCredential, encryptionCredential, xmlPath.getString("AuthnRequest.@ID"),
-                "http://eidas-tomcat-1a.arendus.kit:8080/EidasNode/ColleagueResponse", loa, givenName, familyName, personIdentifier, dateOfBirth, "http://eidas-tomcat-1a.arendus.kit:8080/EidasNode/ServiceMetadata", 5, "http://eidas-tomcat-1a.arendus.kit:8080/EidasNode/ConnectorMetadata");
+                testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeResponseUrl(), loa, givenName, familyName, personIdentifier, dateOfBirth, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl());
+        String stringResponse = OpenSAMLUtils.getXmlString(response);
+        validateSamlResponseSignature(stringResponse);
+        return new String(Base64.getEncoder().encode(stringResponse.getBytes()));
+    }
+
+    protected String getBase64SamlResponseDefaultMaximalAttributes(String requestBody) {
+        XmlPath xmlPath = getDecodedSamlRequestBodyXml(requestBody);
+        String loa =  xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
+        org.opensaml.saml.saml2.core.Response response = new ResponseBuilderUtils().buildAuthnResponseWithMaxAttributes(signatureCredential, encryptionCredential, xmlPath.getString("AuthnRequest.@ID"),
+                testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeResponseUrl(), loa, DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO, DEFATTR_DATE, DEFATTR_BIRTH_NAME, DEFATTR_BIRTH_PLACE, DEFATTR_ADDR, DEFATTR_GENDER, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl());
+        String stringResponse = OpenSAMLUtils.getXmlString(response);
+        validateSamlResponseSignature(stringResponse);
+        return new String(Base64.getEncoder().encode(stringResponse.getBytes()));
+    }
+
+    protected String getBase64SamlResponseLegalMaximalAttributes(String requestBody) {
+        XmlPath xmlPath = getDecodedSamlRequestBodyXml(requestBody);
+        org.opensaml.saml.saml2.core.Response response = new ResponseBuilderUtils().buildAuthnResponseWithMaxLegalAttributes(signatureCredential, encryptionCredential, xmlPath.getString("AuthnRequest.@ID"),
+                testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeResponseUrl(), xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef"), DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO,
+                DEFATTR_DATE, DEFATTR_LEGAL_NAME, DEFATTR_LEGAL_PNO, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl(),
+                DEFATTR_LEGAL_ADDRESS, DEFATTR_LEGAL_VATREGISTRATION, DEFATTR_LEGAL_TAXREFERENCE, DEFATTR_LEGAL_LEI, DEFATTR_LEGAL_EORI, DEFATTR_LEGAL_SEED, DEFATTR_LEGAL_SIC, DEFATTR_LEGAL_D201217EUIDENTIFIER);
+        String stringResponse = OpenSAMLUtils.getXmlString(response);
+        validateSamlResponseSignature(stringResponse);
+        return new String(Base64.getEncoder().encode(stringResponse.getBytes()));
+    }
+
+    protected String getBase64SamlResponseWithErrors(String requestBody, String error) {
+        XmlPath xmlPath = getDecodedSamlRequestBodyXml(requestBody);
+        org.opensaml.saml.saml2.core.Response response = new ResponseBuilderUtils().buildAuthnResponseWithError(signatureCredential, xmlPath.getString("AuthnRequest.@ID"),
+                testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeResponseUrl(), error, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl(), LOA_LOW);
         String stringResponse = OpenSAMLUtils.getXmlString(response);
         validateSamlResponseSignature(stringResponse);
         return new String(Base64.getEncoder().encode(stringResponse.getBytes()));
@@ -559,4 +609,30 @@ public abstract class TestsBase {
         }
     }
 
+    protected Boolean isEidasPresent(Response response) {
+        String thisValue = response.htmlPath().getString ("**.findAll { it.@id == 'collapseEidas' }.@aria-labelledby");
+        if(thisValue.equals("methodEidas")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected Boolean isMidPresent(Response response) {
+        String thisValue = response.htmlPath().getString ("**.findAll { it.@id == 'collapseMob' }.@aria-labelledby");
+        if(thisValue.equals("methodMobID")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected Boolean isIdCardPresent(Response response) {
+        String thisValue = response.htmlPath().getString ("**.findAll { it.@id == 'collapseOne' }.@aria-labelledby");
+        if(thisValue.equals("methodIDCard")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

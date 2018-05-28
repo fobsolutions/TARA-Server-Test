@@ -21,7 +21,7 @@ public class OpenSAMLUtils {
         T object;
         try {
             XMLObjectBuilderFactory builderFactory = XMLObjectProviderRegistrySupport.getBuilderFactory();
-            QName defaultElementName = (QName) clazz.getDeclaredField("DEFAULT_ELEMENT_NAME").get(null);
+            QName defaultElementName = (QName)clazz.getDeclaredField("DEFAULT_ELEMENT_NAME").get(null);
             object = (T) builderFactory.getBuilder(defaultElementName).buildObject(defaultElementName);
         } catch (IllegalAccessException | NoSuchFieldException e) {
             throw new RuntimeException("SAML1 error:" + e.getMessage(), e);

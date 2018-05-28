@@ -14,6 +14,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 
+import static ee.ria.tara.config.TaraTestStrings.OIDC_DEF_SCOPE;
 import static org.junit.Assert.assertEquals;
 
 @SpringBootTest(classes = MobileIdTest.class)
@@ -22,8 +23,8 @@ public class MobileIdTest extends TestsBase {
 
     @Ignore
     @Test
-    public void mobileIdAuthenticationSuccess() throws InterruptedException, URISyntaxException, ParseException, JOSEException {
-        String authorizationCode = authenticateWithMobileId("00000266", "60001019896", 2000);
+    public void mob1_mobileIdAuthenticationSuccess() throws InterruptedException, URISyntaxException, ParseException, JOSEException {
+        String authorizationCode = authenticateWithMobileId("00000266", "60001019896", 2000, OIDC_DEF_SCOPE);
         SignedJWT signedJWT = verifyTokenAndReturnSignedJwtObject(getIdToken(authorizationCode));
 
         assertEquals("EE60001019896", signedJWT.getJWTClaimsSet().getSubject());
@@ -33,8 +34,8 @@ public class MobileIdTest extends TestsBase {
     }
 
     @Test
-    public void mobileIdAuthenticationSuccessWithRealLifeDelay() throws InterruptedException, URISyntaxException, ParseException, JOSEException {
-        String authorizationCode = authenticateWithMobileId("00000766", "60001019906", 7000);
+    public void mob1_mobileIdAuthenticationSuccessWithRealLifeDelay() throws InterruptedException, URISyntaxException, ParseException, JOSEException {
+        String authorizationCode = authenticateWithMobileId("00000766", "60001019906", 7000, OIDC_DEF_SCOPE);
         SignedJWT signedJWT = verifyTokenAndReturnSignedJwtObject(getIdToken(authorizationCode));
 
         assertEquals("EE60001019906", signedJWT.getJWTClaimsSet().getSubject());
@@ -44,44 +45,44 @@ public class MobileIdTest extends TestsBase {
     }
 
     @Test
-    public void mobileIdAuthenticationMidNotActivated() {
+    public void mob2_mobileIdAuthenticationMidNotActivated() {
         String errorMessage = authenticateWithMobileIdError("00000366","60001019928");
         assertEquals("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti", errorMessage);
     }
 
     @Test
-    public void mobileIdAuthenticationUserCertificatesRevoked() {
+    public void mob2_mobileIdAuthenticationUserCertificatesRevoked() {
         String errorMessage = authenticateWithMobileIdError("00000266","60001019939");
-        assertEquals("Autentimine Teie Mobiil-ID-ga ei õnnestunud. Testi oma Mobiil-ID toimimist haldusvahendis: http://www.id.ee/index.php?id=35636", errorMessage);
+        assertEquals("Autentimine Mobiil-ID-ga ei õnnestunud. Testi oma Mobiil-ID toimimist haldusvahendis: http://www.id.ee/index.php?id=35636", errorMessage);
     }
 
     @Test
-    public void mobileIdAuthenticationRequestToPhoneFailed() throws URISyntaxException, InterruptedException {
+    public void mob2_mobileIdAuthenticationRequestToPhoneFailed() throws URISyntaxException, InterruptedException {
         String errorMessage = authenticateWithMobileIdPollError("07110066","60001019947", 500);
-        assertEquals("Teie telefoni ei saa Mobiil-ID autentimise sõnumeid saata", errorMessage);
+        assertEquals("Teie mobiiltelefoni ei saa Mobiil-ID autentimise sõnumeid saata", errorMessage);
     }
 
     @Test
-    public void mobileIdAuthenticationUserCancels() throws URISyntaxException, InterruptedException {
+    public void mob2_mobileIdAuthenticationTechnicalError() throws URISyntaxException, InterruptedException {
+        String errorMessage = authenticateWithMobileIdPollError("00000666","60001019961", 3000);
+        assertEquals("Autentimine Mobiil-ID-ga ei õnnestunud. Testi oma Mobiil-ID toimimist haldusvahendis: http://www.id.ee/index.php?id=35636", errorMessage);
+    }
+
+    @Test
+    public void mob2_mobileIdAuthenticationSimApplicationError() throws URISyntaxException, InterruptedException {
+        String errorMessage = authenticateWithMobileIdPollError("01200266","60001019972", 1000);
+        assertEquals("Teie mobiiltelefoni SIM kaardiga tekkis tõrge", errorMessage);
+    }
+
+    @Test
+    public void mob2_mobileIdAuthenticationPhoneNotInNetwork() throws URISyntaxException, InterruptedException {
+        String errorMessage = authenticateWithMobileIdPollError("13100266","60001019983", 1000);
+        assertEquals("Teie mobiiltelefon on levialast väljas", errorMessage);
+    }
+
+    @Test
+    public void mob3_mobileIdAuthenticationUserCancels() throws URISyntaxException, InterruptedException {
         String errorMessage = authenticateWithMobileIdPollError("01100266","60001019950", 1000);
         assertEquals("Autentimine on katkestatud", errorMessage);
-    }
-
-    @Test
-    public void mobileIdAuthenticationTechnicalError() throws URISyntaxException, InterruptedException {
-        String errorMessage = authenticateWithMobileIdPollError("00000666","60001019961", 3000);
-        assertEquals("Autentimine Teie Mobiil-ID-ga ei õnnestunud. Testi oma Mobiil-ID toimimist haldusvahendis: http://www.id.ee/index.php?id=35636", errorMessage);
-    }
-
-    @Test
-    public void mobileIdAuthenticationSimApplicationError() throws URISyntaxException, InterruptedException {
-        String errorMessage = authenticateWithMobileIdPollError("01200266","60001019972", 1000);
-        assertEquals("Teie telefoni SIM kaardiga tekkis tõrge", errorMessage);
-    }
-
-    @Test
-    public void mobileIdAuthenticationPhoneNotInNetwork() throws URISyntaxException, InterruptedException {
-        String errorMessage = authenticateWithMobileIdPollError("13100266","60001019983", 1000);
-        assertEquals("Teie telefon on levialast väljaspool piirkonda", errorMessage);
     }
 }

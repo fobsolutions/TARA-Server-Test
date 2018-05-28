@@ -15,7 +15,8 @@ public class TestTaraProperties {
     private String responseSigningKeyId;
     private String responseSigningKeyPass;
     private String eidasNodeUrl;
-    private String eidasNodeMetadataUrl;
+    private String eidasNodeConnectorMetadataUrl;
+    private String eidasNodeServiceMetadataUrl;
     private String eidasNodeResponseUrl;
     private String jwksUrl;
     private String testRedirectUri;
@@ -36,6 +37,14 @@ public class TestTaraProperties {
         this.eidasNodeResponseUrl = eidasNodeResponseUrl;
     }
 
+    public String getEidasNodeServiceMetadataUrl() {
+        return eidasNodeServiceMetadataUrl;
+    }
+
+    public void setEidasNodeServiceMetadataUrl(String eidasNodeServiceMetadataUrl) {
+        this.eidasNodeServiceMetadataUrl = eidasNodeServiceMetadataUrl;
+    }
+
     public String getEidasNodeUrl() {
         return eidasNodeUrl;
     }
@@ -44,12 +53,12 @@ public class TestTaraProperties {
         this.eidasNodeUrl = eidasNodeUrl;
     }
 
-    public String getEidasNodeMetadataUrl() {
-        return eidasNodeMetadataUrl;
+    public String getEidasNodeConnectorMetadataUrl() {
+        return eidasNodeConnectorMetadataUrl;
     }
 
-    public void setEidasNodeMetadataUrl(String eidasNodeMetadataUrl) {
-        this.eidasNodeMetadataUrl = eidasNodeMetadataUrl;
+    public void setEidasNodeConnectorMetadataUrl(String eidasNodeMetadataUrl) {
+        this.eidasNodeConnectorMetadataUrl = eidasNodeMetadataUrl;
     }
 
     public String getConfigurationUrl() {
@@ -190,9 +199,5 @@ public class TestTaraProperties {
 
     public String getResponseSigningKeyPass() {
         return responseSigningKeyPass;
-    }
-
-    public String getFullEidasNodeMetadataUrl() {
-        return eidasNodeUrl + eidasNodeMetadataUrl;
     }
 }

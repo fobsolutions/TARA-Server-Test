@@ -42,14 +42,23 @@ public class TaraTestStrings {
     public static final String DEFATTR_DATE = "1900-11-09";
     public static final String DEFATTR_BIRTH_NAME = "Test-Birth-First-Last-Name";
     public static final String DEFATTR_BIRTH_PLACE = "Country";
-    public static final String DEFATTR_ADDR = "Street 1, Flat 3, Village 2, Country7";
+    public static final String DEFATTR_ADDR = "PGVpZGFzOkxvY2F0b3JEZXNpZ25hdG9yPjIyPC9laWRhczpMb2NhdG9yRGVzaWduYXRvcj4NCjxlaWRhczpUaG9yb3VnaGZhcmU+QXJjYWNpYSBBdmVudWU8L2VpZGFzOlRob3JvdWdoZmFyZT4NCjxlaWRhczpQb3N0TmFtZT5Mb25kb248L2VpZGFzOlBvc3ROYW1lPiANCjxlaWRhczpQb3N0Q29kZT5TVzFBIDFBQTwvZWlkYXM6UG9zdGNvZGU+";
     public static final String DEFATTR_GENDER = "Male";
     public static final String DEFATTR_LEGAL_NAME = "Good Company a/s";
-    public static final String DEFATTR_LEGAL_PNO = "292938483902";
+    public static final String DEFATTR_LEGAL_PNO = "EE/CA/292938483902";
+    public static final String DEFATTR_LEGAL_ADDRESS = "PGVpZGFzOkxvY2F0b3JEZXNpZ25hdG9yPjEyNTwvZWlkYXM6TG9jYXRvckRlc2lnbmF0b3I+DQo8ZWlkYXM6VGhvcm91Z2hmYXJlPktpbmdzd2F5PC9laWRhczpUaG9yb3VnaGZhcmU+DQo8ZWlkYXM6UG9zdE5hbWU+TG9uZG9uPC9laWRhczpQb3N0TmFtZT4gDQo8ZWlkYXM6UG9zdENvZGU+V0MyQiA2Tkg8L2VpZGFzOlBvc3Rjb2RlPg==";
+    public static final String DEFATTR_LEGAL_VATREGISTRATION = "GB 730 7577 27";
+    public static final String DEFATTR_LEGAL_TAXREFERENCE = "ABZ1230789";
+    public static final String DEFATTR_LEGAL_D201217EUIDENTIFIER = "GB 755 267 1243";
+    public static final String DEFATTR_LEGAL_LEI = "ES123567983568437254K";
+    public static final String DEFATTR_LEGAL_EORI = "GB123456789000";
+    public static final String DEFATTR_LEGAL_SEED = "GB 00000987ABC";
+    public static final String DEFATTR_LEGAL_SIC = "3730";
 
     //OpenID Connect string
     public static final String OIDC_AMR_MID = "mID";
     public static final String OIDC_AMR_IDC = "idcard";
-    public static final String OIDC_AMR_EIDAS = "eIDAS ";
-
+    public static final String OIDC_AMR_EIDAS = "eIDAS";
+    public static final String OIDC_DEF_SCOPE = "openid";
+    public static final String OIDC_EIDAS_ONLY_SCOPE = "openid eidasonly";
 }
