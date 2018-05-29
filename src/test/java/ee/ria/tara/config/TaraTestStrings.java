@@ -61,4 +61,7 @@ public class TaraTestStrings {
     public static final String OIDC_AMR_EIDAS = "eIDAS";
     public static final String OIDC_DEF_SCOPE = "openid";
     public static final String OIDC_EIDAS_ONLY_SCOPE = "openid eidasonly";
+    public static final String OIDC_ACR_VALUES_LOW = "low";
+    public static final String OIDC_ACR_VALUES_SUBSTANTIAL = "substantial";
+    public static final String OIDC_ACR_VALUES_HIGH = "high";
 }

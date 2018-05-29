@@ -173,8 +173,41 @@ public abstract class TestsBase {
         return getAuthorizationCode(location);
     }
 
-    protected Response initiateEidasAuthentication(String personCountry, String scope) {
-        String execution = getAuthenticationMethodsPage(scope).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+    protected String authenticateWithMobileIdWithParams(String mobileNo, String idCode, Integer pollMillis, Map<String,String> values) throws InterruptedException, URISyntaxException {
+        String execution = getAuthenticationMethodsPageWithParams(values).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+        String execution2 = given()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("execution", execution)
+                .formParam("_eventId", "submit")
+                .formParam("mobileNumber", mobileNo)
+                .formParam("moblang", "et")
+                .formParam("principalCode", idCode)
+                .queryParam("client_id", testTaraProperties.getClientId())
+                .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
+//                .log().all()
+                .when()
+                .post(testTaraProperties.getLoginUrl())
+                .then()
+//                .log().all()
+                .extract().response()
+                .htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+
+        String location = pollForAuthentication(execution2, pollMillis);
+
+        return getAuthorizationCode(location);
+    }
+
+    protected Response initiateEidasAuthentication(String personCountry, String scope, String acrValues) {
+        Map<String,String> formParams = new HashMap<String,String>();
+        formParams.put("scope", scope);
+        formParams.put("response_type", "code");
+        formParams.put("client_id", testTaraProperties.getClientId());
+        formParams.put("redirect_uri", testTaraProperties.getTestRedirectUri());
+        formParams.put("lang", "et");
+        if (acrValues != null) {
+            formParams.put("acr_values", acrValues);
+        }
+        String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
         return getEidasSamlRequest(personCountry, execution);
     }
 
@@ -269,6 +302,19 @@ public abstract class TestsBase {
                 .extract().response();
     }
 
+    protected Response returnEidasFailureResponse(String samlResponse, String relayState) {
+        return given()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("RelayState", relayState)
+                .formParam("SAMLResponse", samlResponse)
+                .log().all()
+                .when()
+                .post(testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl())
+                .then()
+                .log().all()
+                .extract().response();
+    }
+
     protected Response getAuthenticationMethodsPage(String scope) {
         state = RandomStringUtils.random(16);
         String sha256StateBase64 = Base64.getEncoder().encodeToString(DigestUtils.sha256(state));
@@ -284,6 +330,39 @@ public abstract class TestsBase {
                 .queryParam("state", sha256StateBase64)
                 .queryParam("nonce", sha256NonceBase64)
                 .queryParam("lang", "et")
+                .when()
+                .redirects().follow(false)
+//                .log().all()
+                .get(testTaraProperties.getAuthorizeUrl())
+                .then()
+//                .log().all()
+                .extract().response()
+                .getHeader("location");
+
+        return  given()
+                .filter(cookieFilter)
+                .relaxedHTTPSValidation()
+                .when()
+                .redirects().follow(false)
+                .urlEncodingEnabled(false)
+//                .log().all()
+                .get(location)
+                .then()
+//                .log().all()
+                .extract().response();
+    }
+
+    protected Response getAuthenticationMethodsPageWithParams(Map<String,String> values) {
+        state = RandomStringUtils.random(16);
+        String sha256StateBase64 = Base64.getEncoder().encodeToString(DigestUtils.sha256(state));
+        nonce = RandomStringUtils.random(16);
+        String sha256NonceBase64 = Base64.getEncoder().encodeToString(DigestUtils.sha256(nonce));
+        String location = given()
+                .filter(cookieFilter)
+                .relaxedHTTPSValidation()
+                .queryParams(values)
+                .queryParam("state", sha256StateBase64)
+                .queryParam("nonce", sha256NonceBase64)
                 .when()
                 .redirects().follow(false)
                 .log().all()
@@ -311,25 +390,25 @@ public abstract class TestsBase {
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
                 .redirects().follow(false)
-//                .log().all()
+                .log().all()
                 .when()
                 .urlEncodingEnabled(false)
                 .get(url)
                 .then()
-//                .log().all()
+                .log().all()
                 .extract().response()
                 .getHeader("location");
 
         String location2 = given()
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
-//                .log().all()
+                .log().all()
                 .when()
                 .redirects().follow(false)
                 .urlEncodingEnabled(false)
                 .get(location)
                 .then()
-//                .log().all()
+                .log().all()
                 .extract().response()
                 .getHeader("Location");
 
