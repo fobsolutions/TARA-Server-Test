@@ -18,19 +18,37 @@ a) Võimalik on ette anda kahe erineva "profiili" properties faile "dev" ja "tes
 
 b) Andes vastavad parameetrid ette testide käivitamisel (kirjeldus testide käivitamise punktis)
 
-Parameetrite kirjeldus:
+TARA OpenID Connect spetsiifilised väärtused - vajalikud suhtlemiseks TARA-ga.
 
 | Parameeter | Vaikeväärtus | Kirjeldus |
 |------------|--------------|-----------|
 | test.tara.testRedirectUri | https://localhost:8451/oauth/response | TARA OpenID Connect teenuses registreeritud return URI. |
 | test.tara.clientId | registeredClientId | TARA OpenID Connect teenuses registreeritud kliendi id. |
-| test.tara.clientSecret | sharedSecret | TARA OpenID Connect teenuses registreeritud saladus. |
+| test.tara.clientSecret | sharedSecret | TARA OpenID Connect teenuses registreeritud salajane "võti". |
 | test.tara.targetUrl | https://localhost:443 | TARA teenuse URL. |
 | test.tara.jwksUrl | /oidc/jwks | TARA OpenID Connect avaliku võtme otspunkt. |
 | test.tara.authorizeUrl | /oidc/authorize | TARA autentimise alustamise otspunkt. |
 | test.tara.tokenUrl | /oidc/token | TARA tokeni otspunkt. |
 | test.tara.loginUrl | /login | TARA sisse logimise otspunkt. |
 | test.tara.configurationUrl | /oidc/.well-known/openid-configuration | TARA konfiguratsiooni otspunkt. |
+
+eIDAS node spetsiifilised väärtused - vajalikud simuleerimaks eIDAS nodei.
+
+| Parameeter | Vaikeväärtus | Kirjeldus |
+|------------|--------------|-----------|
+| test.tara.eidasNodeUrl | http://localhost:8080 | TARA-ga ühendatud eIDAS nodei aadress. |
+| test.tara.eidasNodeConnectorMetadataUrl | /EidasNode/ConnectorMetadata | Konnektorteenuse metadata url. |
+| test.tara.eidasNodeServiceMetadataUrl | /EidasNode/ServiceMetadata | Proksiteenuse metadata url |
+| test.tara.eidasNodeResponseUrl | /EidasNode/ColleagueResponse | eIDAS node-i tagasipöördumise url |
+
+Võtmete seadistamise väärtused - vajalikud sõnumite allkirjastamiseks
+
+| Parameeter | Vaikeväärtus | Kirjeldus |
+|------------|--------------|-----------|
+| test.tara.keystore | classpath:samlKeystore.jks | Võtmehoidla |
+| test.tara.keystorePass | changeit | Võtmehoidla parool |
+| test.tara.responseSigningKeyId | aare_meta | Allkirjastamise võtme id |
+| test.tara.responseSigningKeyPass | changeit | Allkirjastamise võtme parool |
 
 4. Käivita testid:
 
