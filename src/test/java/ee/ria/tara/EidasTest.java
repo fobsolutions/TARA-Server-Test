@@ -24,7 +24,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas1_eidasAuthenticationMinAttrSuccess() throws URISyntaxException, ParseException, JOSEException {
-        Response response = initiateEidasAuthentication("EE", OIDC_DEF_SCOPE, "low");
+        Response response = initiateEidasAuthentication(DEF_COUNTRY, OIDC_DEF_SCOPE, "low");
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         //Here we need to simulate a response from foreign country eIDAS Node
@@ -42,7 +42,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas1_eidasAuthenticationMaxAttrSuccess() throws URISyntaxException, ParseException, JOSEException {
-        Response response = initiateEidasAuthentication("EE", OIDC_DEF_SCOPE, null);
+        Response response = initiateEidasAuthentication(DEF_COUNTRY, OIDC_DEF_SCOPE, null);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         //Here we need to simulate a response from foreign country eIDAS Node
@@ -60,7 +60,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas1_eidasAuthenticationMaxLegalAttrSuccess() throws URISyntaxException, ParseException, JOSEException {
-        Response response = initiateEidasAuthentication("EE", OIDC_DEF_SCOPE, null);
+        Response response = initiateEidasAuthentication(DEF_COUNTRY, OIDC_DEF_SCOPE, null);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         //Here we need to simulate a response from foreign country eIDAS Node
@@ -78,7 +78,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas2_eidasAuthenticationFailure() {
-        Response response = initiateEidasAuthentication("EE", OIDC_DEF_SCOPE, null);
+        Response response = initiateEidasAuthentication(DEF_COUNTRY, OIDC_DEF_SCOPE, null);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         //Here we need to simulate a response from foreign country eIDAS Node
@@ -93,7 +93,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas2_eidasConsentFailure() {
-        Response response = initiateEidasAuthentication("EE", OIDC_DEF_SCOPE, null);
+        Response response = initiateEidasAuthentication(DEF_COUNTRY, OIDC_DEF_SCOPE, null);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         //Here we need to simulate a response from foreign country eIDAS Node
@@ -108,7 +108,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas2_eidasRandomFailure() {
-        Response response = initiateEidasAuthentication("EE", OIDC_DEF_SCOPE, null);
+        Response response = initiateEidasAuthentication(DEF_COUNTRY, OIDC_DEF_SCOPE, null);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         //Here we need to simulate a response from foreign country eIDAS Node
@@ -121,28 +121,8 @@ public class EidasTest extends TestsBase {
         assertEquals("Üldine viga", error);
     }
 
-    @Ignore
-    @Test //TODO: eIDAS Node do not forward the relayState!
-    public void eidas2_eidasWrongRelayState() throws URISyntaxException, ParseException, JOSEException {
-        Response response = initiateEidasAuthentication("EE", OIDC_DEF_SCOPE, null);
-        String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
-
-        String loa = getDecodedSamlRequestBodyXml(response.getBody().asString()).getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
-        //Here we need to simulate a response from foreign country eIDAS Node
-        String samlResponse = getBase64SamlResponseMinimalAttributes(response.getBody().asString(), DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO, DEFATTR_DATE, loa);
-
-        String authorizationCode = getAuthorizationCode(returnEidasResponse(samlResponse, "a"+relayState));
-        SignedJWT signedJWT = verifyTokenAndReturnSignedJwtObject(getIdToken(authorizationCode));
-
-        assertEquals("EE30011092212", signedJWT.getJWTClaimsSet().getSubject());
-        assertEquals(DEFATTR_FIRST, signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("given_name"));
-        assertEquals(DEFATTR_FAMILY, signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("family_name"));
-        assertEquals(DEFATTR_DATE, signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("date_of_birth"));
-        assertEquals(OIDC_AMR_EIDAS, signedJWT.getJWTClaimsSet().getStringArrayClaim("amr")[0]);
-    }
-
     @Test
-    public void eidas2_eidasAcrValueLowShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
+    public void eidas3_eidasAcrValueLowShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
         Map<String,String> formParams = new HashMap<String,String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
@@ -152,7 +132,7 @@ public class EidasTest extends TestsBase {
         formParams.put("acr_values", OIDC_ACR_VALUES_LOW);
 
         String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        Response response = getEidasSamlRequest("EE", execution);
+        Response response = getEidasSamlRequest(DEF_COUNTRY, execution);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         String loa = getDecodedSamlRequestBodyXml(response.getBody().asString()).getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
@@ -171,7 +151,7 @@ public class EidasTest extends TestsBase {
     }
 
     @Test
-    public void eidas2_eidasAcrValueSubstantialShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
+    public void eidas3_eidasAcrValueSubstantialShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
         Map<String,String> formParams = new HashMap<String,String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
@@ -181,7 +161,7 @@ public class EidasTest extends TestsBase {
         formParams.put("acr_values", OIDC_ACR_VALUES_SUBSTANTIAL);
 
         String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        Response response = getEidasSamlRequest("EE", execution);
+        Response response = getEidasSamlRequest(DEF_COUNTRY, execution);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         String loa = getDecodedSamlRequestBodyXml(response.getBody().asString()).getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
@@ -200,7 +180,7 @@ public class EidasTest extends TestsBase {
     }
 
     @Test
-    public void eidas2_eidasAcrValueHighShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
+    public void eidas3_eidasAcrValueHighShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
         Map<String,String> formParams = new HashMap<String,String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
@@ -210,7 +190,7 @@ public class EidasTest extends TestsBase {
         formParams.put("acr_values", OIDC_ACR_VALUES_HIGH);
 
         String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        Response response = getEidasSamlRequest("EE", execution);
+        Response response = getEidasSamlRequest(DEF_COUNTRY, execution);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         String loa = getDecodedSamlRequestBodyXml(response.getBody().asString()).getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
@@ -229,7 +209,7 @@ public class EidasTest extends TestsBase {
     }
 
     @Test
-    public void eidas2_eidasAcrValueDefaultShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
+    public void eidas3_eidasAcrValueDefaultShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
         Map<String,String> formParams = new HashMap<String,String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
@@ -238,7 +218,7 @@ public class EidasTest extends TestsBase {
         formParams.put("lang", "et");
 
         String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        Response response = getEidasSamlRequest("EE", execution);
+        Response response = getEidasSamlRequest(DEF_COUNTRY, execution);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         String loa = getDecodedSamlRequestBodyXml(response.getBody().asString()).getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
@@ -257,7 +237,7 @@ public class EidasTest extends TestsBase {
     }
 
     @Test
-    public void eidas2_eidasAcrValueHigherLoaReturnedThanAskedShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
+    public void eidas3_eidasAcrValueHigherLoaReturnedThanAskedShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
         Map<String,String> formParams = new HashMap<String,String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
@@ -268,7 +248,7 @@ public class EidasTest extends TestsBase {
 
 
         String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        Response response = getEidasSamlRequest("EE", execution);
+        Response response = getEidasSamlRequest(DEF_COUNTRY, execution);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
         //Here we need to simulate a response from foreign country eIDAS Node
 
@@ -286,7 +266,7 @@ public class EidasTest extends TestsBase {
     }
 
     @Test
-    public void eidas2_eidasAcrValueLowerLoaReturnedThanAskedShouldReturnError() throws URISyntaxException, ParseException, JOSEException {
+    public void eidas3_eidasAcrValueLowerLoaReturnedThanAskedShouldReturnError() throws URISyntaxException, ParseException, JOSEException {
         Map<String,String> formParams = new HashMap<String,String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
@@ -296,7 +276,7 @@ public class EidasTest extends TestsBase {
         formParams.put("acr_values", OIDC_ACR_VALUES_SUBSTANTIAL);
 
         String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        Response response = getEidasSamlRequest("EE", execution);
+        Response response = getEidasSamlRequest(DEF_COUNTRY, execution);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         //Here we need to simulate a response from foreign country eIDAS Node
@@ -307,5 +287,25 @@ public class EidasTest extends TestsBase {
         String error = errorResponse.htmlPath().getString("**.findAll { it.@class=='sub-title' }");
 
         assertEquals("An unexpected error has occurred", error);
+    }
+
+    @Ignore
+    @Test //TODO: eIDAS Node do not forward the relayState!
+    public void eidas4_eidasWrongRelayState() throws URISyntaxException, ParseException, JOSEException {
+        Response response = initiateEidasAuthentication(DEF_COUNTRY, OIDC_DEF_SCOPE, null);
+        String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
+
+        String loa = getDecodedSamlRequestBodyXml(response.getBody().asString()).getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
+        //Here we need to simulate a response from foreign country eIDAS Node
+        String samlResponse = getBase64SamlResponseMinimalAttributes(response.getBody().asString(), DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO, DEFATTR_DATE, loa);
+
+        String authorizationCode = getAuthorizationCode(returnEidasResponse(samlResponse, "a"+relayState));
+        SignedJWT signedJWT = verifyTokenAndReturnSignedJwtObject(getIdToken(authorizationCode));
+
+        assertEquals("EE30011092212", signedJWT.getJWTClaimsSet().getSubject());
+        assertEquals(DEFATTR_FIRST, signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("given_name"));
+        assertEquals(DEFATTR_FAMILY, signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("family_name"));
+        assertEquals(DEFATTR_DATE, signedJWT.getJWTClaimsSet().getJSONObjectClaim("profile_attributes").getAsString("date_of_birth"));
+        assertEquals(OIDC_AMR_EIDAS, signedJWT.getJWTClaimsSet().getStringArrayClaim("amr")[0]);
     }
 }

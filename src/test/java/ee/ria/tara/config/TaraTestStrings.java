@@ -14,27 +14,6 @@ public class TaraTestStrings {
     public static final String NAME_ID_FORMAT_TRANSIENT = "urn:oasis:names:tc:SAML:2.0:nameid-format:transient";
     public static final String NAME_ID_FORMAT_ENCRYPTED = "urn:oasis:names:tc:SAML:2.0:nameid-format:encrypted";
 
-    //JSON response strings
-    public static final String STATUS_CODE = "statusCode";
-    public static final String STATUS_LOA = "levelOfAssurance";
-    public static final String STATUS_DATE = "attributes.DateOfBirth";
-    public static final String STATUS_PNO = "attributes.PersonIdentifier";
-    public static final String STATUS_FAMILY = "attributes.FamilyName";
-    public static final String STATUS_FIRST = "attributes.FirstName";
-    public static final String STATUS_ADDR = "attributes.CurrentAddress";
-    public static final String STATUS_GENDER = "attributes.Gender";
-    public static final String STATUS_BIRTH_NAME = "attributes.BirthName";
-    public static final String STATUS_BIRTH_PLACE = "attributes.PlaceOfBirth";
-    public static final String STATUS_LEGAL_NAME = "attributes.LegalName";
-    public static final String STATUS_LEGAL_PNO = "attributes.LegalPersonIdentifier";
-
-    //JSON response error strings
-    public static final String STATUS_ERROR = "error";
-    public static final String STATUS_ERROR_MESSAGE = "message";
-
-    //JSON response error messages
-    public static final String BAD_SAML = "Bad SAML message";
-
     //Test data strings
     public static final String DEFATTR_FIRST = "Test-FirstName";
     public static final String DEFATTR_FAMILY = "Test-FamilyName";
@@ -54,6 +33,9 @@ public class TaraTestStrings {
     public static final String DEFATTR_LEGAL_EORI = "GB123456789000";
     public static final String DEFATTR_LEGAL_SEED = "GB 00000987ABC";
     public static final String DEFATTR_LEGAL_SIC = "3730";
+
+    //eIDAS strings
+    public static final String DEF_COUNTRY = "EE";
 
     //OpenID Connect string
     public static final String OIDC_AMR_MID = "mID";

@@ -5,7 +5,6 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import ee.ria.tara.config.IntegrationTest;
 import io.restassured.response.Response;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,8 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static ee.ria.tara.config.TaraTestStrings.*;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.*;
 
@@ -38,8 +35,8 @@ public class OpenIdConnectTest extends TestsBase {
     }
 
     @Test
-    public void oidc1_authenticationWithEidasShouldSucceed() throws InterruptedException, URISyntaxException, ParseException, JOSEException {
-        Response response = initiateEidasAuthentication("EE", OIDC_DEF_SCOPE, null);
+    public void oidc1_authenticationWithEidasShouldSucceed() throws URISyntaxException, ParseException, JOSEException {
+        Response response = initiateEidasAuthentication(DEF_COUNTRY, OIDC_DEF_SCOPE, null);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         //Here we need to simulate a response from foreign country eIDAS Node
@@ -155,7 +152,7 @@ public class OpenIdConnectTest extends TestsBase {
         formParams.put("acr_values", OIDC_ACR_VALUES_LOW);
 
         String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        Response response = getEidasSamlRequest("EE", execution);
+        Response response = getEidasSamlRequest(DEF_COUNTRY, execution);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         String loa = getDecodedSamlRequestBodyXml(response.getBody().asString()).getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
@@ -185,7 +182,7 @@ public class OpenIdConnectTest extends TestsBase {
         formParams.put("acr_values", OIDC_ACR_VALUES_HIGH);
 
         String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        Response response = getEidasSamlRequest("EE", execution);
+        Response response = getEidasSamlRequest(DEF_COUNTRY, execution);
         String relayState = response.htmlPath().getString("**.findAll { it.@name == 'RelayState' }[0].@value");
 
         String loa = getDecodedSamlRequestBodyXml(response.getBody().asString()).getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");

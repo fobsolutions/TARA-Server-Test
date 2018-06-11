@@ -251,11 +251,11 @@ public abstract class TestsBase {
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("RelayState", relayState)
                 .formParam("SAMLResponse", samlResponse)
-                .log().all()
+//                .log().all()
                 .when()
                 .post(testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl())
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response();
 
         samlResponse = response.htmlPath().getString("**.findAll { it.@name == 'SAMLResponse' }[0].@value");
@@ -266,11 +266,11 @@ public abstract class TestsBase {
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("RelayState", relayState)
                 .formParam("SAMLResponse", samlResponse)
-                .log().all()
+//                .log().all()
                 .when()
                 .post(url)
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().header("location");
     }
 
@@ -279,11 +279,11 @@ public abstract class TestsBase {
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("RelayState", relayState)
                 .formParam("SAMLResponse", samlResponse)
-                .log().all()
+//                .log().all()
                 .when()
                 .post(testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl())
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response();
 
         samlResponse = response.htmlPath().getString("**.findAll { it.@name == 'SAMLResponse' }[0].@value");
@@ -294,11 +294,11 @@ public abstract class TestsBase {
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("RelayState", relayState)
                 .formParam("SAMLResponse", samlResponse)
-                .log().all()
+//                .log().all()
                 .when()
                 .post(url)
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response();
     }
 
@@ -307,11 +307,11 @@ public abstract class TestsBase {
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("RelayState", relayState)
                 .formParam("SAMLResponse", samlResponse)
-                .log().all()
+//                .log().all()
                 .when()
                 .post(testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl())
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response();
     }
 
@@ -365,10 +365,10 @@ public abstract class TestsBase {
                 .queryParam("nonce", sha256NonceBase64)
                 .when()
                 .redirects().follow(false)
-                .log().all()
+//                .log().all()
                 .get(testTaraProperties.getAuthorizeUrl())
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response()
                 .getHeader("location");
 
@@ -378,10 +378,10 @@ public abstract class TestsBase {
                 .when()
                 .redirects().follow(false)
                 .urlEncodingEnabled(false)
-                .log().all()
+//                .log().all()
                 .get(location)
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response();
     }
 
@@ -390,25 +390,25 @@ public abstract class TestsBase {
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
                 .redirects().follow(false)
-                .log().all()
+//                .log().all()
                 .when()
                 .urlEncodingEnabled(false)
                 .get(url)
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response()
                 .getHeader("location");
 
         String location2 = given()
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
-                .log().all()
+//                .log().all()
                 .when()
                 .redirects().follow(false)
                 .urlEncodingEnabled(false)
                 .get(location)
                 .then()
-                .log().all()
+//                .log().all()
                 .extract().response()
                 .getHeader("Location");
 
