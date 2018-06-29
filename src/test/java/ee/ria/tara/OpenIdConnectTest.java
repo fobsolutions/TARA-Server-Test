@@ -86,6 +86,7 @@ public class OpenIdConnectTest extends TestsBase {
         assertEquals("Only eIDAS must be present", true, isEidasPresent(response));
         assertEquals("Only eIDAS must be present", false, isMidPresent(response));
         assertEquals("Only eIDAS must be present", false, isIdCardPresent(response));
+        assertEquals("Only eIDAS must be present", false, isBankPresent(response));
     }
 
     @Test
@@ -95,6 +96,8 @@ public class OpenIdConnectTest extends TestsBase {
         assertEquals("eIDAS must be present", true, isEidasPresent(response));
         assertEquals("MID must be present", true, isMidPresent(response));
         assertEquals("ID-Card must be present", true, isIdCardPresent(response));
+        assertEquals("Bank must be present", true, isBankPresent(response));
+
     }
 
     @Test

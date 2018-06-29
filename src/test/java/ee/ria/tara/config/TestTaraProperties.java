@@ -28,6 +28,8 @@ public class TestTaraProperties {
     private String serviceUrl;
     private String configurationUrl;
     private String casClientId;
+    private String banklinkMockUrl;
+
 
     public String getEidasNodeResponseUrl() {
         return eidasNodeResponseUrl;
@@ -199,5 +201,13 @@ public class TestTaraProperties {
 
     public String getResponseSigningKeyPass() {
         return responseSigningKeyPass;
+    }
+
+    public String getBanklinkMockUrl() {
+        return banklinkMockUrl;
+    }
+
+    public void setBanklinkMockUrl(String banklinkMockUrl) {
+        this.banklinkMockUrl = banklinkMockUrl;
     }
 }

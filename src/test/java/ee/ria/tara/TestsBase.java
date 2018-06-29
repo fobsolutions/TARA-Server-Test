@@ -1,15 +1,16 @@
 package ee.ria.tara;
 
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.*;
 import com.nimbusds.jwt.SignedJWT;
 import ee.ria.tara.config.IntegrationTest;
 import ee.ria.tara.config.TestConfiguration;
+import ee.ria.tara.config.TestTaraProperties;
 import ee.ria.tara.utils.OpenSAMLUtils;
 import ee.ria.tara.utils.ResponseBuilderUtils;
 import ee.ria.tara.utils.SystemPropertyActiveProfileResolver;
-import ee.ria.tara.config.TestTaraProperties;
 import ee.ria.tara.utils.XmlUtils;
 import io.restassured.filter.cookie.CookieFilter;
 import io.restassured.path.xml.XmlPath;
@@ -50,7 +51,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.KeyStore;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -81,7 +83,7 @@ public abstract class TestsBase {
     protected String nonce;
 
     protected Credential signatureCredential;
-    protected  Credential encryptionCredential;
+    protected Credential encryptionCredential;
 
     @Before
     public void setUp() throws IOException, InitializationException, ParseException {
@@ -91,7 +93,7 @@ public abstract class TestsBase {
 
         jwkSet = JWKSet.load(new URL(testTaraProperties.getFullJwksUrl()));
 
-        tokenIssuer = getIssuer(testTaraProperties.getTargetUrl()+testTaraProperties.getConfigurationUrl());
+        tokenIssuer = getIssuer(testTaraProperties.getTargetUrl() + testTaraProperties.getConfigurationUrl());
 
         Security.addProvider(new BouncyCastleProvider());
         InitializationService.initialize();
@@ -102,7 +104,7 @@ public abstract class TestsBase {
             KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
             Resource resource = resourceLoader.getResource(testTaraProperties.getKeystore());
             keystore.load(resource.getInputStream(), testTaraProperties.getKeystorePass().toCharArray());
-            signatureCredential = getCredential(keystore, testTaraProperties.getResponseSigningKeyId(), testTaraProperties.getResponseSigningKeyPass() );
+            signatureCredential = getCredential(keystore, testTaraProperties.getResponseSigningKeyId(), testTaraProperties.getResponseSigningKeyPass());
             encryptionCredential = getEncryptionCredentialFromMetaData(getMetadataBody());
         } catch (Exception e) {
             throw new RuntimeException("Something went wrong initializing credentials:", e);
@@ -129,7 +131,7 @@ public abstract class TestsBase {
         return given()
                 .config(config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .get(testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl())
+                .get(testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeConnectorMetadataUrl())
                 .then()
                 .log().ifError()
                 .statusCode(200)
@@ -173,7 +175,7 @@ public abstract class TestsBase {
         return getAuthorizationCode(location);
     }
 
-    protected String authenticateWithMobileIdWithParams(String mobileNo, String idCode, Integer pollMillis, Map<String,String> values) throws InterruptedException, URISyntaxException {
+    protected String authenticateWithMobileIdWithParams(String mobileNo, String idCode, Integer pollMillis, Map<String, String> values) throws InterruptedException, URISyntaxException {
         String execution = getAuthenticationMethodsPageWithParams(values).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
         String execution2 = given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
@@ -198,7 +200,7 @@ public abstract class TestsBase {
     }
 
     protected Response initiateEidasAuthentication(String personCountry, String scope, String acrValues) {
-        Map<String,String> formParams = new HashMap<String,String>();
+        Map<String, String> formParams = new HashMap<String, String>();
         formParams.put("scope", scope);
         formParams.put("response_type", "code");
         formParams.put("client_id", testTaraProperties.getClientId());
@@ -339,20 +341,20 @@ public abstract class TestsBase {
                 .extract().response()
                 .getHeader("location");
 
-        return  given()
+        return given()
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
                 .when()
                 .redirects().follow(false)
                 .urlEncodingEnabled(false)
-//                .log().all()
+                //               .log().all()
                 .get(location)
                 .then()
 //                .log().all()
                 .extract().response();
     }
 
-    protected Response getAuthenticationMethodsPageWithParams(Map<String,String> values) {
+    protected Response getAuthenticationMethodsPageWithParams(Map<String, String> values) {
         state = RandomStringUtils.random(16);
         String sha256StateBase64 = Base64.getEncoder().encodeToString(DigestUtils.sha256(state));
         nonce = RandomStringUtils.random(16);
@@ -372,7 +374,7 @@ public abstract class TestsBase {
                 .extract().response()
                 .getHeader("location");
 
-        return  given()
+        return given()
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
                 .when()
@@ -421,7 +423,7 @@ public abstract class TestsBase {
     }
 
     protected Response postToTokenEndpoint(String authorizationCode) {
-        return  given()
+        return given()
                 .relaxedHTTPSValidation()
                 .queryParam("grant_type", "authorization_code")
                 .queryParam("code", authorizationCode)
@@ -436,19 +438,18 @@ public abstract class TestsBase {
                 .extract().response();
     }
 
-    protected String getAuthorization(String id ,String secret) {
+    protected String getAuthorization(String id, String secret) {
         return String.format("Basic %s", Base64.getEncoder().encodeToString(String.format("%s:%s", id, secret).getBytes(StandardCharsets.UTF_8)));
     }
 
-    private String getCode (String url) throws URISyntaxException {
+    private String getCode(String url) throws URISyntaxException {
         List<NameValuePair> params = URLEncodedUtils.parse(new URI(url), "UTF-8");
 
         Map<String, String> queryParams = params.stream().collect(
                 Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
         if (queryParams.get("state").equals(Base64.getEncoder().encodeToString(DigestUtils.sha256(state)))) {
             return queryParams.get("code");
-        }
-        else {
+        } else {
             throw new RuntimeException("State value do not match!");
         }
     }
@@ -466,7 +467,7 @@ public abstract class TestsBase {
     }
 
     protected SignedJWT verifyTokenAndReturnSignedJwtObject(String token) throws ParseException, JOSEException {
-        SignedJWT signedJWT =  SignedJWT.parse(token);
+        SignedJWT signedJWT = SignedJWT.parse(token);
         if (isTokenSignatureValid(signedJWT)) {
             if (signedJWT.getJWTClaimsSet().getAudience().get(0).equals(testTaraProperties.getClientId())) {
                 if (signedJWT.getJWTClaimsSet().getIssuer().equals(tokenIssuer)) {
@@ -474,31 +475,26 @@ public abstract class TestsBase {
                     if (date.after(signedJWT.getJWTClaimsSet().getNotBeforeTime()) && date.before(signedJWT.getJWTClaimsSet().getExpirationTime())) {
                         if (signedJWT.getJWTClaimsSet().getClaim("nonce").equals(Base64.getEncoder().encodeToString(DigestUtils.sha256(nonce)))) {
                             return signedJWT;
-                        }
-                        else {
+                        } else {
                             throw new RuntimeException("Calculated nonce do not match the received one!");
                         }
+                    } else {
+                        throw new RuntimeException("Token validity period is not valid! current: " + date + " nbf: " + signedJWT.getJWTClaimsSet().getNotBeforeTime() + " exp: " + signedJWT.getJWTClaimsSet().getExpirationTime());
                     }
-                    else {
-                        throw new RuntimeException("Token validity period is not valid! current: " + date + " nbf: "+signedJWT.getJWTClaimsSet().getNotBeforeTime()+" exp: "+signedJWT.getJWTClaimsSet().getExpirationTime());
-                    }
+                } else {
+                    throw new RuntimeException("Token Issuer is not valid! Expected: " + tokenIssuer + " actual: " + signedJWT.getJWTClaimsSet().getIssuer());
                 }
-                else {
-                    throw new RuntimeException("Token Issuer is not valid! Expected: "+tokenIssuer+" actual: "+signedJWT.getJWTClaimsSet().getIssuer());
-                }
+            } else {
+                throw new RuntimeException("Token Audience is not valid! Expected: " + testTaraProperties.getClientId() + " actual: " + signedJWT.getJWTClaimsSet().getAudience().get(0));
             }
-            else {
-                throw new RuntimeException("Token Audience is not valid! Expected: "+testTaraProperties.getClientId()+" actual: "+signedJWT.getJWTClaimsSet().getAudience().get(0));
-            }
-        }
-        else {
+        } else {
             throw new RuntimeException("Token Signature is not valid!");
         }
     }
 
     protected String authenticateWithMobileIdError(String mobileNo, String idCode) {
         String execution = getAuthenticationMethodsPage(OIDC_DEF_SCOPE).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
-        String error =  given()
+        String error = given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("execution", execution)
                 .formParam("_eventId", "submit")
@@ -547,8 +543,8 @@ public abstract class TestsBase {
     }
 
     protected String pollForAuthentication(String execution, Integer intervalMillis) throws InterruptedException {
-        DateTime endTime = new DateTime().plusMillis(intervalMillis*3 + 200);
-        while(new DateTime().isBefore(endTime)) {
+        DateTime endTime = new DateTime().plusMillis(intervalMillis * 3 + 200);
+        while (new DateTime().isBefore(endTime)) {
             Thread.sleep(intervalMillis);
             Response response = given()
                     .filter(cookieFilter)
@@ -570,12 +566,12 @@ public abstract class TestsBase {
                 return response.getHeader("location");
             }
         }
-        throw new RuntimeException("No MID response in: "+ (intervalMillis*3 + 200) +" millis");
+        throw new RuntimeException("No MID response in: " + (intervalMillis * 3 + 200) + " millis");
     }
 
     protected Response pollForError(String execution, Integer intervalMillis) throws InterruptedException {
-        DateTime endTime = new DateTime().plusMillis(intervalMillis*3 + 200);
-        while(new DateTime().isBefore(endTime)) {
+        DateTime endTime = new DateTime().plusMillis(intervalMillis * 3 + 200);
+        while (new DateTime().isBefore(endTime)) {
             Thread.sleep(intervalMillis);
             Response response = given()
                     .filter(cookieFilter)
@@ -597,16 +593,16 @@ public abstract class TestsBase {
                 return response;
             }
         }
-        throw new RuntimeException("No MID error response in: "+ (intervalMillis*3 + 200) +" millis");
+        throw new RuntimeException("No MID error response in: " + (intervalMillis * 3 + 200) + " millis");
     }
 
     protected String getBase64SamlResponseMinimalAttributes(String requestBody, String givenName, String familyName, String personIdentifier, String dateOfBirth, String loa) {
         XmlPath xmlPath = getDecodedSamlRequestBodyXml(requestBody);
-        if(loa == null) {
-            loa =  xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
+        if (loa == null) {
+            loa = xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
         }
         org.opensaml.saml.saml2.core.Response response = new ResponseBuilderUtils().buildAuthnResponse(signatureCredential, encryptionCredential, xmlPath.getString("AuthnRequest.@ID"),
-                testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeResponseUrl(), loa, givenName, familyName, personIdentifier, dateOfBirth, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl());
+                testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl(), loa, givenName, familyName, personIdentifier, dateOfBirth, testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeConnectorMetadataUrl());
         String stringResponse = OpenSAMLUtils.getXmlString(response);
         validateSamlResponseSignature(stringResponse);
         return new String(Base64.getEncoder().encode(stringResponse.getBytes()));
@@ -614,9 +610,9 @@ public abstract class TestsBase {
 
     protected String getBase64SamlResponseDefaultMaximalAttributes(String requestBody) {
         XmlPath xmlPath = getDecodedSamlRequestBodyXml(requestBody);
-        String loa =  xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
+        String loa = xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
         org.opensaml.saml.saml2.core.Response response = new ResponseBuilderUtils().buildAuthnResponseWithMaxAttributes(signatureCredential, encryptionCredential, xmlPath.getString("AuthnRequest.@ID"),
-                testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeResponseUrl(), loa, DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO, DEFATTR_DATE, DEFATTR_BIRTH_NAME, DEFATTR_BIRTH_PLACE, DEFATTR_ADDR, DEFATTR_GENDER, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl());
+                testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl(), loa, DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO, DEFATTR_DATE, DEFATTR_BIRTH_NAME, DEFATTR_BIRTH_PLACE, DEFATTR_ADDR, DEFATTR_GENDER, testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeConnectorMetadataUrl());
         String stringResponse = OpenSAMLUtils.getXmlString(response);
         validateSamlResponseSignature(stringResponse);
         return new String(Base64.getEncoder().encode(stringResponse.getBytes()));
@@ -625,8 +621,8 @@ public abstract class TestsBase {
     protected String getBase64SamlResponseLegalMaximalAttributes(String requestBody) {
         XmlPath xmlPath = getDecodedSamlRequestBodyXml(requestBody);
         org.opensaml.saml.saml2.core.Response response = new ResponseBuilderUtils().buildAuthnResponseWithMaxLegalAttributes(signatureCredential, encryptionCredential, xmlPath.getString("AuthnRequest.@ID"),
-                testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeResponseUrl(), xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef"), DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO,
-                DEFATTR_DATE, DEFATTR_LEGAL_NAME, DEFATTR_LEGAL_PNO, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl(),
+                testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl(), xmlPath.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef"), DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO,
+                DEFATTR_DATE, DEFATTR_LEGAL_NAME, DEFATTR_LEGAL_PNO, testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeConnectorMetadataUrl(),
                 DEFATTR_LEGAL_ADDRESS, DEFATTR_LEGAL_VATREGISTRATION, DEFATTR_LEGAL_TAXREFERENCE, DEFATTR_LEGAL_LEI, DEFATTR_LEGAL_EORI, DEFATTR_LEGAL_SEED, DEFATTR_LEGAL_SIC, DEFATTR_LEGAL_D201217EUIDENTIFIER);
         String stringResponse = OpenSAMLUtils.getXmlString(response);
         validateSamlResponseSignature(stringResponse);
@@ -636,7 +632,7 @@ public abstract class TestsBase {
     protected String getBase64SamlResponseWithErrors(String requestBody, String error) {
         XmlPath xmlPath = getDecodedSamlRequestBodyXml(requestBody);
         org.opensaml.saml.saml2.core.Response response = new ResponseBuilderUtils().buildAuthnResponseWithError(signatureCredential, xmlPath.getString("AuthnRequest.@ID"),
-                testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeResponseUrl(), error, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl()+testTaraProperties.getEidasNodeConnectorMetadataUrl(), LOA_LOW);
+                testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeResponseUrl(), error, testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeServiceMetadataUrl(), 5, testTaraProperties.getEidasNodeUrl() + testTaraProperties.getEidasNodeConnectorMetadataUrl(), LOA_LOW);
         String stringResponse = OpenSAMLUtils.getXmlString(response);
         validateSamlResponseSignature(stringResponse);
         return new String(Base64.getEncoder().encode(stringResponse.getBytes()));
@@ -650,7 +646,7 @@ public abstract class TestsBase {
         return decodedSAMLrequest;
     }
 
-    protected Credential getEncryptionCredentialFromMetaData (String body) throws CertificateException {
+    protected Credential getEncryptionCredentialFromMetaData(String body) throws CertificateException {
         java.security.cert.X509Certificate x509Certificate = getEncryptionCertificate(body);
         BasicX509Credential encryptionCredential = new BasicX509Credential(x509Certificate);
         return encryptionCredential;
@@ -666,7 +662,7 @@ public abstract class TestsBase {
         XmlPath metadataXml = new XmlPath(body);
         try {
             java.security.cert.X509Certificate x509 = X509Support.decodeCertificate(metadataXml.getString("Response.Signature.KeyInfo.X509Data.X509Certificate"));
-            validateSignature(body,x509);
+            validateSignature(body, x509);
             return true;
         } catch (CertificateException e) {
             throw new RuntimeException("Certificate parsing in validateSignature() failed:" + e.getMessage(), e);
@@ -677,7 +673,7 @@ public abstract class TestsBase {
         try {
             x509.checkValidity();
             SignableSAMLObject signableObj = XmlUtils.unmarshallElement(body);
-            X509Credential credential = CredentialSupport.getSimpleCredential(x509,null);
+            X509Credential credential = CredentialSupport.getSimpleCredential(x509, null);
             SignatureValidator.validate(signableObj.getSignature(), credential);
         } catch (SignatureException e) {
             throw new RuntimeException("Signature validation in validateSignature() failed: " + e.getMessage(), e);
@@ -689,8 +685,8 @@ public abstract class TestsBase {
     }
 
     protected Boolean isEidasPresent(Response response) {
-        String thisValue = response.htmlPath().getString ("**.findAll { it.@id == 'collapseEidas' }.@aria-labelledby");
-        if(thisValue.equals("methodEidas")) {
+        String thisValue = response.htmlPath().getString("**.findAll { it.@id == 'collapseEidas' }.@aria-labelledby");
+        if (thisValue.equals("methodEidas")) {
             return true;
         } else {
             return false;
@@ -698,8 +694,8 @@ public abstract class TestsBase {
     }
 
     protected Boolean isMidPresent(Response response) {
-        String thisValue = response.htmlPath().getString ("**.findAll { it.@id == 'collapseMob' }.@aria-labelledby");
-        if(thisValue.equals("methodMobID")) {
+        String thisValue = response.htmlPath().getString("**.findAll { it.@id == 'collapseMob' }.@aria-labelledby");
+        if (thisValue.equals("methodMobID")) {
             return true;
         } else {
             return false;
@@ -707,11 +703,125 @@ public abstract class TestsBase {
     }
 
     protected Boolean isIdCardPresent(Response response) {
-        String thisValue = response.htmlPath().getString ("**.findAll { it.@id == 'collapseOne' }.@aria-labelledby");
-        if(thisValue.equals("methodIDCard")) {
+        String thisValue = response.htmlPath().getString("**.findAll { it.@id == 'collapseOne' }.@aria-labelledby");
+        if (thisValue.equals("methodIDCard")) {
             return true;
         } else {
             return false;
         }
+    }
+
+    protected Map<String, String> startBankAuthentication(String bank, String scope, String language) throws InterruptedException, URISyntaxException {
+        Map<String, String> formParams = new HashMap<String, String>();
+        formParams.put("scope", scope);
+        formParams.put("response_type", "code");
+        formParams.put("client_id", testTaraProperties.getClientId());
+        formParams.put("redirect_uri", testTaraProperties.getTestRedirectUri());
+        formParams.put("lang", language);
+
+        String execution = getAuthenticationMethodsPageWithParams(formParams).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+        System.out.println("##############################################################");
+        Map execution2 = given()
+//                .log().all()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("execution", execution)
+                .formParam("_eventId", "banksubmit")
+                .formParam("geolocation", "")
+                .formParam("bank", bank)
+                .queryParam("service", testTaraProperties.getServiceUrl())
+                .queryParam("client_name", testTaraProperties.getCasClientId())
+                .queryParam("client_id", testTaraProperties.getClientId())
+                .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
+                .when()
+                .post(testTaraProperties.getLoginUrl())
+                .then()
+//                .log().all()
+                .extract().response()
+                .htmlPath().getMap("**.find { it.@id == 'bankRedirectForm' }.div.input.collectEntries { [it.@name, it.@value] }");
+
+        Map<String, String> newMap = new HashMap<>();
+        execution2.forEach((k, v) -> newMap.put(k.toString(), v.toString()));
+        return newMap;
+    }
+
+    protected Map getBankResponse(Map bankRequestParams, String url) throws InterruptedException, URISyntaxException {
+
+        Map execution = given()
+                //.log().all()
+                .formParams(bankRequestParams).log().all()
+                .when().post(testTaraProperties.getBanklinkMockUrl() + "/auth")
+                .then()
+                //.log().all()
+                .extract().response().htmlPath().getMap("**.find { it.@id == 'submitForm' }.input.collectEntries { [it.@name, it.@value] }");
+
+        Map<String, String> newMap = new HashMap<>();
+        execution.forEach((k, v) -> newMap.put(k.toString(), v.toString()));
+        return newMap;
+    }
+
+    protected String banklinkCallbackPOST(Map bankResponseParams) {
+        return given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post(testTaraProperties.getLoginUrl()).then().log().all().extract().response()
+                .getHeader("location");
+    }
+
+    protected String banklinkCallbackGET(Map bankResponseParams) {
+        return given().redirects().follow(false).filter(cookieFilter).relaxedHTTPSValidation().log().all().queryParams(bankResponseParams).get(testTaraProperties.getLoginUrl()).then().log().all().extract().response()
+                .getHeader("location");
+    }
+    protected Boolean isBankPresent(Response response) {
+        String thisValue = response.htmlPath().getString("**.findAll { it.@id == 'collapseBank' }.@aria-labelledby");
+        if (thisValue.equals("methodBank")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    protected String authenticateWithSmartId(String personcode, Integer pollMillis, String scope) throws InterruptedException, URISyntaxException {
+        String execution = getAuthenticationMethodsPage(scope).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+        String execution2 = given()
+                //.log().all()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("execution", execution)
+                .formParam("_eventId", "smartIdSubmit")
+                .formParam("geolocation", "")
+                .formParam("principalCode", personcode)
+                .queryParam("service", testTaraProperties.getServiceUrl())
+                .queryParam("client_name", testTaraProperties.getCasClientId())
+                .queryParam("client_id", testTaraProperties.getClientId())
+                .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
+                .when()
+                .post(testTaraProperties.getLoginUrl())
+                .then()
+                //.log().all()
+                .extract().response()
+                .htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+
+        String location = pollForAuthentication(execution2, pollMillis);
+
+        return getAuthorizationCode(location);
+    }
+
+    protected String authenticateWithSmartIdPollError(String idCode, Integer pollMillis) throws InterruptedException, URISyntaxException {
+        String execution = getAuthenticationMethodsPage(OIDC_DEF_SCOPE).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+        String execution2 = given()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("execution", execution)
+                .formParam("_eventId", "smartIdSubmit")
+                .formParam("principalCode", idCode)
+                .queryParam("client_id", testTaraProperties.getClientId())
+                .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
+//                .log().all()
+                .when()
+                .post(testTaraProperties.getLoginUrl())
+                .then()
+//                .log().all()
+                .extract().response()
+                .htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+
+        String error = pollForError(execution2, pollMillis).htmlPath().getString("**.findAll { it.@class=='error-box' }");
+        error = error.substring(4);
+        return error;
     }
 }
