@@ -47,7 +47,7 @@ public class MobileIdTest extends TestsBase {
     @Test
     public void mob2_mobileIdAuthenticationMidNotActivated() {
         String errorMessage = authenticateWithMobileIdError("00000366","60001019928");
-        assertEquals("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti", errorMessage);
+        assertEquals("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti.", errorMessage);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class MobileIdTest extends TestsBase {
     @Test
     public void mob2_mobileIdAuthenticationRequestToPhoneFailed() throws URISyntaxException, InterruptedException {
         String errorMessage = authenticateWithMobileIdPollError("07110066","60001019947", 500);
-        assertEquals("Teie mobiiltelefoni ei saa Mobiil-ID autentimise sõnumeid saata", errorMessage);
+        assertEquals("Teie mobiiltelefoni ei saa Mobiil-ID autentimise sõnumeid saata.", errorMessage);
     }
 
     @Test
@@ -71,18 +71,18 @@ public class MobileIdTest extends TestsBase {
     @Test
     public void mob2_mobileIdAuthenticationSimApplicationError() throws URISyntaxException, InterruptedException {
         String errorMessage = authenticateWithMobileIdPollError("01200266","60001019972", 1000);
-        assertEquals("Teie mobiiltelefoni SIM kaardiga tekkis tõrge", errorMessage);
+        assertEquals("Teie mobiiltelefoni SIM kaardiga tekkis tõrge.", errorMessage);
     }
 
     @Test
     public void mob2_mobileIdAuthenticationPhoneNotInNetwork() throws URISyntaxException, InterruptedException {
         String errorMessage = authenticateWithMobileIdPollError("13100266","60001019983", 1000);
-        assertEquals("Teie mobiiltelefon on levialast väljas", errorMessage);
+        assertEquals("Teie mobiiltelefon on levialast väljas.", errorMessage);
     }
 
     @Test
     public void mob3_mobileIdAuthenticationUserCancels() throws URISyntaxException, InterruptedException {
         String errorMessage = authenticateWithMobileIdPollError("01100266","60001019950", 1000);
-        assertEquals("Autentimine on katkestatud", errorMessage);
+        assertEquals("Autentimine on katkestatud.", errorMessage);
     }
 }

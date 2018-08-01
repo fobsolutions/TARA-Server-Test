@@ -88,7 +88,7 @@ public class EidasTest extends TestsBase {
 
         String error = errorResponse.htmlPath().getString("**.findAll { it.@class=='error-box' }").substring(4);
 
-        assertEquals("Autentimine eIDAS-ga ebaõnnestus", error);
+        assertEquals("Autentimine eIDAS-ga ebaõnnestus.", error);
     }
 
     @Test
@@ -103,7 +103,7 @@ public class EidasTest extends TestsBase {
 
         String error = errorResponse.htmlPath().getString("**.findAll { it.@class=='error-box' }").substring(4);
 
-        assertEquals("Autentimine eIDAS-ga ebaõnnestus", error);
+        assertEquals("Autentimine eIDAS-ga ebaõnnestus.", error);
     }
 
     @Test
