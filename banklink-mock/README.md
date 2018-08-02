@@ -4,7 +4,28 @@
 
 Mock teenus ootab `/ipizza/auth` otspunktil GET ja POST päringuid ning moodustab vastuseks vastavalt päringus leitud tagasipöördumisurlile (`VK_RETURN`) automaatse ümbersuunamisvormi koos autentimisvastusega.
 
-Teenus lisab algses päringus tulnud `VK_SND_ID`, `VK_REC_ID`, `VK_NONCE`, `VK_RID`, `VK_ENCODING` ja `VK_LANG` väärtused vastusesse. Mocki vastuses kasutatavad muud väljad tagastatakse vastavalt seadistusele. Vaikimisi, kui panga jaoks pole tagastatavaid väärtuseid paika pandud (vt allpool toodud seadistamise näiteid), tagastatakse iga panga vastuses väärtused vastavalt `application.properties` failis toodule.
+Teenus lisab algses päringus tulnud `VK_SND_ID`, `VK_REC_ID`, `VK_NONCE`, `VK_RID`, `VK_ENCODING` ja `VK_LANG` väärtused vastusesse. Mocki vastuses kasutatavad muud väljad tagastatakse vastavalt seadistusele. Vaikimisi, kui panga jaoks pole tagastatavaid väärtuseid paika pandud (vt allpool toodud seadistamise näiteid), tagastatakse iga panga vastuses üldised vaikeväärtused vastavalt `application.properties` failis toodule (ja `/ipizza/defaults` otspunkti kaudu seadistatule).
+
+
+## Paigaldamine ja käivitamine
+
+1. Hangi TARA testid:
+
+ `git clone https://github.com/e-gov/TARA-Server-Test.git`
+
+2. Liigu pangalingiga autentimise mock teenuse kausta:
+
+ `cd TARA-Server-Test/banklink-mock/`
+
+3. Ehita rakendus:
+
+ `mvn clean install`
+
+4. Käivita rakendus:
+
+ `java -jar target/banklink-mock-1.0.jar`
+
+Rakendus hakkab kuulama konfiguratsioonifailis `application.properties` parameetri `server.port` poolt määratud porti.
 
 
 ## Quickstart TARA näitel
@@ -31,23 +52,17 @@ Teenus lisab algses päringus tulnud `VK_SND_ID`, `VK_REC_ID`, `VK_NONCE`, `VK_R
 ## Globaalsete vaikeseadete haldamise otspunkt: /ipizza/defaults
 
 
-PUT - määra parameetrite vaikeväärtusi, näiteks:
-
-PUT http://localhost:8990/ipizza/defaults?VK_USER_NAME=Kasutaja%20Nimi
-muudab/määrab VK_USER_NAME parameetri vaikeväärtuseks "Kasutaja Nimi"
-
-curl -X PUT "http://localhost:8990/ipizza/banks?id=COOP&key=MIIJQwIBADANBgkqhkiG9w0BAQEFAASCCS0wggkpAgEAAoICAQCHBd9QV3BgygR6uhnH29P68U5IlgL7AQyA3%2FZ3yIzhQN1P38Be%2BR9BKHObt%2F0g3uSim%2BhPXoEJdJdZU6kLK6VNO7cA4ncJVkwsegQZk8bBQvlq8R00%2BeWqDvEON7oDZEiUsciyTg%2Bp5ode5G1COL7%2F9WT8q3KkkZnfSRWFEE2EkH7FieXaS%2BftaXpBzqer4VdzyFe5lf3daHL%2Fg91l0Ye85pN24vseIJcpHxrmWhN%2BELYDHoug80vqDZy613UcUZ3%2FS2xPHrK9gAO7TigLVaL6IX8leAuxkqN62fhsIe3Evf%2FlbIAp6kJ0Wxr5Ff1PEcuPDbnXKYJkOJCgs6TBj6nXqVkauNqH524hZ2Y5UUfqdyOJbIgpDXwvDIulbTLRdaBk238BYdrdLWk7LCjiqvQH6VsRnXpuhPwHwnBi%2Fu%2BVFzc5aNeRCrdstBWTO5aho%2BdtVOo1PWwZ5i0JwAzIGwTnfuYlCyHfv%2FuzOOTKKYDDNmHFS3XZ8E%2FIujkmzsfxkn9HdTWGayNgVFlvb30EpCtIQoI14maEhTV36iLoBUwA5PsQxMg0djCOwauKCmdZpOgHYLcRlp%2FHacnQbKo2wo2%2FhABfr0adM6V1n9j7oKKUQamaK7s96qjcYTz5pzlEzVQqupguaxhBmErVLjpi4y40RzYVgo1ULOctRpbyHYywSQIDAQABAoICAQCDfmSMiZsXp6XVH4gb6yn2KSpj5jPg3pSerX4KCXWpqNHfB7kAxPx7KDnuXLBXYrqm4c7L%2FO0NmE4M4DywdED3hkAizGnA3how9mMnxZK6g88DJu2augPAKez4O60bwH4u0TTy8LKwc6FB%2BJOu%2BjSIcSN4Lj%2FnpSSFH1elzsqvX0kWd8UxYtrrit1VWTxRV5MjXuiQBFLHXQEhdfoXPodCoArcrRCBtpt%2FoJtB2ldBXmTjhMvWYxp7ReZsz4dtnM6R4ZIJO4w2oIUB1IuK%2FktJ7XU1uEMrG%2FO5oK0eIay8%2FYxIkfH%2B3%2FT3%2FAG4soGOj3X%2BSw%2FBStuBXtT6q%2Fi3yIFN61QWoWSGbgHEYHc6RneT9PwcVHvxdbXBNNOSUD7FQs%2FCfiHQQVadoDBlzxLXwOg1OA52Uglj9kTkKZtHVWEUP69JZSElwP0BfkvvPH9Zx24iE17FkkcjMHHbgR47Fq%2FEcg39VUU03ScaYFZLxySbj%2BJzhzXpmM7icdCzLrPGpV9oSaIR2WaeFW3YHQ3guF2eBIk9FvuZv2wSb8yAglgnlGZs%2Fvlhd73%2B3QCvu1%2Bs%2FEmUZNKEXJvr4%2FpxuW7pxf1ntAEnY4EDD3SW4tRNh%2FhXDzEnK2OT6CzndrpgH56Lq%2BywrpK58JwOFUNYA%2BWqUIj9pLXA2ISOvLCVCL5oVGciQQKCAQEAwlQE9hByvtsrGYigZr7h%2B9Rbkvu88eTPXlTMA5fnWH8pkJnefuEflt6AlK0joC8HB3bDh%2B58EOCPSHe9j6lYseRovwsiugGUlNXX796hOsrDVShhez0IpoxAONWVr%2BaW%2FsvOy63okKn5TmHkJdEbJ36aJASq2FYAHQxxf6DapDwZRG2Jr2ZNUKn9nMnheStAV9hX8F4cnQ%2B0H%2BgvpOyEV5y%2FKKkT49R8TY2SvrJoGOWnRrVt%2F5w7t%2F8CuO%2FMUROGmgrFfm2nlBeHY8hIzOQHeAFhrGTaB5tSElOGvO6F0AOMKf3UHj7ZMlBWEGE2D%2FV0YeRnaYVuVMO4nRjkW3kj%2FwKCAQEAsd%2BpiZA6b1PuZsih%2BWqzNHVLbsozThG7BoB%2Bx676yxeVeA7bgn2gnf6LGm7RxD1fu%2FLhLLctj7tbSDya%2BKR4%2Ba9zE4TlCIAux3dBEebC1pC4oBEMnVwY61gXbS9h9Bd3k5pOqXZdFm9Yd2BCPwxAlm%2BjIBaQQxF72ygRRsgmrnJcClyzyGlbrZOqgueDqhOD1TMR3QMj9sGkXCvED6scXZCgp1OvndlySgTi1tgDuZzIAn12ejKNjldkLiyjF2i2Hde27FZl7iPSScEN2CYiezNUbZTmoadfbH1pkcxF6SFFUHoaHD5c119klSlnIvrTm3A0rswOZhmAXnTO2pgLtwKCAQAjSFP6RTRAONTTdv4AianIKl9SCYjdtnh8HRNJl7v2Umg%2Bi%2BFc0g0FPHLGC8WLIN662TJZLNCz08HQG4V8XvfunJT0EtaERSMv%2Fr%2BNGrPVU9kxTfqdAJDghFhouUbLQCesLV7nljTCh0nvlFBzGUs%2F2XmtDnfifYLZw1ecH51y8kJ4LRcxlHZ3LdYRMIpSkKrHCE23I684SRCgNmzoGdVRfvEqNcCZvguvnQPGweeqlY%2FQg8JsBXbGSnO5FjjXg58NuuTutoQVnEwFruig4soEXOPaBBmeBfJZx3aQORJsmShKu35W23xd6T4nDS9eqGcwGuM3wnUsyLhtNYbIoO8LAoIBAQCO%2B%2BZDCMeQen2n7hwWbSlFQAy1MKFxXltjbKN9TTGZVIn4iqj2Cpq0psuXIgJJp7RvV1yfH1jms4s7VEyXF0%2BQFvOAe1HJNZFlEn4iL8frx0ZClbH4RPJbLOMYCADLwJmE84PMQbOuty78N0rJd8XrqC4PO1QYNdPEZj8NERPXI2LNiZuTvO3PaGam%2BAglDa7qETWI3l9omlzPIvdmSPxyUjJyj5kaYJO44Jigb%2BD%2BsgMtzUESFdUo2SNU4tjvlmLfNmp7LTCe7%2Fi5BRFl8bHCK47wz8NdqzfP9DiK1RRVxUL84Epg7dif4LTwGuonek3kI5yV7r6cYF%2BKjodBvPudAoIBAD%2F%2FoKXGW8jhXcLRSNWkt91IojVTmonl9xfrlU8z%2BXM8XWGpcfTCHdbLInZgRc9JfnAWiOQuFeOBbrlSAZUvgZi49Aj7HWOOitAIPYFZ%2B0u6u493h1RpilBBzX4Xy5w9giRMrAPWXCH9%2Fr3ZGA77qevIGxCIteqVM1NQihgIg4707vTn8mQnXy%2BJSN3puZTukOV3VN41aIy%2BQ%2FeoyGhLqroUkuugL%2BOpbXFpD6Lovp5XRZVvW1iVQOpptHlSYo1dVQ5a79eFXCU9A39e7E0ulpvK89PIalXoWa1mnldbNFjADPpl5IuxkF0U23uOkUCARKnGbFNad8%2FRCo8hh155tRk%3D"
-
+**PUT** - määra parameetrite vaikeväärtusi, näiteks:
+`PUT http://localhost:8990/ipizza/defaults?VK_USER_NAME=Kasutaja%20Nimi`
+muudab/määrab `VK_USER_NAME` parameetri vaikeväärtuseks "Kasutaja Nimi"
  
 
-GET - päri olemasolevad parameetrite vaikeväärtused, näiteks:
-
-GET http://localhost:8990/ipizza/defaults
+**GET** - päri olemasolevad parameetrite vaikeväärtused, näiteks:
+`GET http://localhost:8990/ipizza/defaults`
  
 
-DELETE - eemalda parameetrite vaikeväärtusi, näiteks:
-
-DELETE http://localhost:8990/ipizza/defaults?VK_USER_NAME=
+**DELETE** - eemalda parameetrite vaikeväärtusi, näiteks:
+`DELETE http://localhost:8990/ipizza/defaults?VK_USER_NAME=`
 eemaldab VK_USER_NAME parameetri vaikeväärtuse
 
 Kõik kolm eelnimetatud päringut tagastavad JSON kujul:
@@ -66,18 +81,15 @@ Kõik kolm eelnimetatud päringut tagastavad JSON kujul:
 
 ## Pankade haldamise otspunkt: /ipizza/banks
 
-PUT - lisa/määra pankasid, näiteks:
-
-PUT http://localhost:8990/ipizza/banks?id=EYP&key={panga privaatvõti base64 kujul}
-lisab panga, mis vastab päringule, milles VK_REC_ID=EYP, ning allkirjastab oma vastuse nimetatud privaatvõtmega; esialgne tagasipöördumismeetod on vaikimisi POST
-
+**PUT** - lisa/määra pankasid, näiteks:
+`PUT http://localhost:8990/ipizza/banks?id=EYP&key={panga privaatvõti base64 kujul}`
+lisab panga, mis vastab päringule, milles `VK_REC_ID=EYP`, ning allkirjastab oma vastuse nimetatud privaatvõtmega; esialgne tagasipöördumismeetod on vaikimisi `POST`
 
 
-GET - päri olemasolevate pankade andmeid, näiteks:
+**GET** - päri olemasolevate pankade andmeid, näiteks:
+`GET http://localhost:8990/ipizza/banks`
 
-GET http://localhost:8990/ipizza/banks
 Mõlemad päringud tagastavad JSON kujul:
-
 ````
 [
   {
@@ -93,26 +105,21 @@ Mõlemad päringud tagastavad JSON kujul:
 
 ## Panga vastuse juhtimine
 
-Individuaalse panga vaikeseadete otspunkt: /ipizza/banks/{panga identifikaator}/defaults
+Individuaalse panga vaikeseadete otspunkt: `/ipizza/banks/{panga identifikaator}/defaults`
 
+
+**PUT** - määra parameetrite vaikeväärtusi, näiteks:
+`PUT http://localhost:8990/ipizza/banks/EYP/defaults?VK_USER_NAME=Kasutaja%20Nimi`
+muudab/määrab vastava panga (EYP) vastava `VK_USER_NAME` parameetri vaikeväärtuseks "Kasutaja Nimi"
  
 
-PUT - määra parameetrite vaikeväärtusi, näiteks:
-
-PUT http://localhost:8990/ipizza/banks/EYP/defaults?VK_USER_NAME=Kasutaja%20Nimi
-muudab/määrab vastava panga (EYP) vastava VK_USER_NAME parameetri vaikeväärtuseks "Kasutaja Nimi"
-
+**GET** - päri olemasolevad parameetrite vaikeväärtused, näiteks:
+`GET http://localhost:8990/ipizza/banks/EYP/defaults`
  
 
-GET - päri olemasolevad parameetrite vaikeväärtused, näiteks:
-
-GET http://localhost:8990/ipizza/banks/EYP/defaults
- 
-
-DELETE - eemalda parameetrite vaikeväärtusi, näiteks:
-
-DELETE http://localhost:8990/ipizza/banks/EYP/defaults?VK_USER_NAME=
-eemaldab VK_USER_NAME parameetri vaikeväärtuse
+**DELETE** - eemalda parameetrite vaikeväärtusi, näiteks:
+`DELETE http://localhost:8990/ipizza/banks/EYP/defaults?VK_USER_NAME=`
+eemaldab `VK_USER_NAME` parameetri vaikeväärtuse
 
 Kõik kolm eelnimetatud päringut tagastavad JSON kujul:
 ````
@@ -123,11 +130,10 @@ Kõik kolm eelnimetatud päringut tagastavad JSON kujul:
 
 ## Tagasipöördumismeetodi juhtimine
 
-Individuaalse panga tagasipöördumismeetodi määramise otspunkt: /ipizza/banks/{panga identifikaator}/method
+Individuaalse panga tagasipöördumismeetodi määramise otspunkt: `/ipizza/banks/{panga identifikaator}/method`
 
 Otspunkti poole saab pöörduda kõikvõimalike HTTP meetodiga, kasutatud meetod määrataksegi vastava panga tagasipöördumismeetodiks, näiteks:
-
-GET http://localhost:8990/ipizza/banks/EYP/method
+`GET http://localhost:8990/ipizza/banks/EYP/method`
 määrab tagasipöördumismeetodiks GET ning tagastab JSON kujul:
 
 ````
@@ -142,7 +148,7 @@ määrab tagasipöördumismeetodiks GET ning tagastab JSON kujul:
 
 ## Vaikeseadistuse näidiskonfiguratsioon
 
-Näidiskonfiguratsioon application.properties:
+Näidiskonfiguratsioon `application.properties`:
 
  
 ````
