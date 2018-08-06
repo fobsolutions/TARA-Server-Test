@@ -132,7 +132,7 @@ public class BanklinkTest extends TestsBase {
         expectedBankRequestParams.put("VK_VERSION", "008");
         expectedBankRequestParams.put("VK_SND_ID", "TARA_DANSKE");
         expectedBankRequestParams.put("VK_REC_ID", "DANSKE");
-        expectedBankRequestParams.put("VK_RETURN", "https://koogelmoogel.net/login");
+        expectedBankRequestParams.put("VK_RETURN", testTaraProperties.getTargetUrl()+testTaraProperties.getLoginUrl());
         expectedBankRequestParams.put("VK_RID", "");
         expectedBankRequestParams.put("VK_ENCODING", "UTF-8");
         expectedBankRequestParams.put("VK_LANG", "EST");
@@ -174,13 +174,13 @@ public class BanklinkTest extends TestsBase {
 
         Map bankRequestParams = startBankAuthentication("danske", OIDC_DEF_SCOPE, "et");
         Map bankResponseParams = getBankResponse(bankRequestParams, "");
-        String location = given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post("https://koogelmoogel.net/login").then().log().all().extract().response()
+        String location = given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post(testTaraProperties.getLoginUrl()).then().log().all().extract().response()
                 .getHeader("location");
         String authorizationCode = getAuthorizationCode(location);
         String token = getIdToken(authorizationCode);
         verifyTokenAndReturnSignedJwtObject(token);
 
-        String responseBody = given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post("https://koogelmoogel.net/login").then().statusCode(500).log().all().extract().response().body().asString();
+        String responseBody = given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post(testTaraProperties.getLoginUrl()).then().statusCode(500).log().all().extract().response().body().asString();
         assertThat(responseBody, StringContains.containsString("Kasutaja tuvastamine ebaõnnestus"));
     }
 
@@ -192,13 +192,13 @@ public class BanklinkTest extends TestsBase {
         Map bankRequestParams = startBankAuthentication("danske", OIDC_DEF_SCOPE, "et");
         Map bankRequestParams2 = startBankAuthentication("danske", OIDC_DEF_SCOPE, "et");
         Map bankResponseParams = getBankResponse(bankRequestParams, "");
-        String location = given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post("https://koogelmoogel.net/login").then().log().all().extract().response()
+        String location = given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post(testTaraProperties.getLoginUrl()).then().log().all().extract().response()
                 .getHeader("location");
         String authorizationCode = getAuthorizationCode(location);
         String token = getIdToken(authorizationCode);
         verifyTokenAndReturnSignedJwtObject(token);
 
-        String responseBody = given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post("https://koogelmoogel.net/login").then().statusCode(500).log().all().extract().response().body().asString();
+        String responseBody = given().filter(cookieFilter).relaxedHTTPSValidation().log().all().formParams(bankResponseParams).post(testTaraProperties.getLoginUrl()).then().statusCode(500).log().all().extract().response().body().asString();
         assertThat(responseBody, StringContains.containsString("Kasutaja tuvastamine ebaõnnestus"));
     }
 
@@ -231,7 +231,6 @@ public class BanklinkTest extends TestsBase {
         keystore.load(resource.getInputStream(), "s3cr3t".toCharArray());
         PrivateKey key = (PrivateKey) keystore.getKey(privatekeyAlias, "s3cr3t".toCharArray());
         String privateKey = Base64.getEncoder().encodeToString(key.getEncoded());
-        System.out.print(privateKey);
         given().log().all().when().put(testTaraProperties.getBanklinkMockUrl() + "/banks?id=" + id + "&key=" + privateKey).then().log().all();
     }
 
