@@ -13,6 +13,8 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 
 import static ee.ria.tara.config.TaraTestStrings.OIDC_DEF_SCOPE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
 
 @SpringBootTest(classes = MobileIdTest.class)
@@ -46,43 +48,43 @@ public class MobileIdTest extends TestsBase {
 
     @Test
     public void mob2_mobileIdAuthenticationMidNotActivated() {
-        String errorMessage = authenticateWithMobileIdError("00000366","60001019928");
-        assertEquals("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti.", errorMessage);
+        String errorMessage = authenticateWithMobileIdError("00000366", "60001019928");
+        assertThat(errorMessage, startsWith("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
     public void mob2_mobileIdAuthenticationUserCertificatesRevoked() {
-        String errorMessage = authenticateWithMobileIdError("00000266","60001019939");
-        assertEquals("Autentimine Mobiil-ID-ga ei õnnestunud. Testi oma Mobiil-ID toimimist haldusvahendis: http://www.id.ee/index.php?id=35636", errorMessage);
+        String errorMessage = authenticateWithMobileIdError("00000266", "60001019939");
+        assertThat(errorMessage, startsWith("Autentimine Mobiil-ID-ga ei õnnestunud. Testi oma Mobiil-ID toimimist haldusvahendis: http://www.id.ee/index.php?id=35636"));
     }
 
     @Test
     public void mob2_mobileIdAuthenticationRequestToPhoneFailed() throws URISyntaxException, InterruptedException {
-        String errorMessage = authenticateWithMobileIdPollError("07110066","60001019947", 500);
-        assertEquals("Teie mobiiltelefoni ei saa Mobiil-ID autentimise sõnumeid saata.", errorMessage);
+        String errorMessage = authenticateWithMobileIdPollError("07110066", "60001019947", 500);
+        assertThat(errorMessage, startsWith("Teie mobiiltelefoni ei saa Mobiil-ID autentimise sõnumeid saata."));
     }
 
     @Test
     public void mob2_mobileIdAuthenticationTechnicalError() throws URISyntaxException, InterruptedException {
-        String errorMessage = authenticateWithMobileIdPollError("00000666","60001019961", 3000);
-        assertEquals("Autentimine Mobiil-ID-ga ei õnnestunud. Testi oma Mobiil-ID toimimist haldusvahendis: http://www.id.ee/index.php?id=35636", errorMessage);
+        String errorMessage = authenticateWithMobileIdPollError("00000666", "60001019961", 3000);
+        assertThat(errorMessage, startsWith("Autentimine Mobiil-ID-ga ei õnnestunud. Testi oma Mobiil-ID toimimist haldusvahendis: http://www.id.ee/index.php?id=35636"));
     }
 
     @Test
     public void mob2_mobileIdAuthenticationSimApplicationError() throws URISyntaxException, InterruptedException {
-        String errorMessage = authenticateWithMobileIdPollError("01200266","60001019972", 1000);
-        assertEquals("Teie mobiiltelefoni SIM kaardiga tekkis tõrge.", errorMessage);
+        String errorMessage = authenticateWithMobileIdPollError("01200266", "60001019972", 1000);
+        assertThat(errorMessage, startsWith("Teie mobiiltelefoni SIM kaardiga tekkis tõrge."));
     }
 
     @Test
     public void mob2_mobileIdAuthenticationPhoneNotInNetwork() throws URISyntaxException, InterruptedException {
-        String errorMessage = authenticateWithMobileIdPollError("13100266","60001019983", 1000);
-        assertEquals("Teie mobiiltelefon on levialast väljas.", errorMessage);
+        String errorMessage = authenticateWithMobileIdPollError("13100266", "60001019983", 1000);
+        assertThat(errorMessage, startsWith("Teie mobiiltelefon on levialast väljas."));
     }
 
     @Test
     public void mob3_mobileIdAuthenticationUserCancels() throws URISyntaxException, InterruptedException {
-        String errorMessage = authenticateWithMobileIdPollError("01100266","60001019950", 1000);
-        assertEquals("Autentimine on katkestatud.", errorMessage);
+        String errorMessage = authenticateWithMobileIdPollError("01100266", "60001019950", 1000);
+        assertThat(errorMessage, startsWith("Autentimine on katkestatud."));
     }
 }

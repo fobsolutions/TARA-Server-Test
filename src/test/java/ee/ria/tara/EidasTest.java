@@ -16,7 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static ee.ria.tara.config.TaraTestStrings.*;
+import static org.hamcrest.core.StringStartsWith.startsWith;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 @SpringBootTest(classes = EidasTest.class)
 @Category(IntegrationTest.class)
@@ -88,7 +90,7 @@ public class EidasTest extends TestsBase {
 
         String error = errorResponse.htmlPath().getString("**.findAll { it.@class=='error-box' }").substring(4);
 
-        assertEquals("Autentimine eIDAS-ga ebaõnnestus.", error);
+        assertThat(error, startsWith("Autentimine eIDAS-ga ebaõnnestus."));
     }
 
     @Test
@@ -103,7 +105,7 @@ public class EidasTest extends TestsBase {
 
         String error = errorResponse.htmlPath().getString("**.findAll { it.@class=='error-box' }").substring(4);
 
-        assertEquals("Autentimine eIDAS-ga ebaõnnestus.", error);
+        assertThat(error, startsWith("Autentimine eIDAS-ga ebaõnnestus."));
     }
 
     @Test
@@ -117,13 +119,12 @@ public class EidasTest extends TestsBase {
         Response errorResponse = returnEidasErrorResponse(samlResponse, relayState);
 
         String error = errorResponse.htmlPath().getString("**.findAll { it.@class=='error-box' }").substring(4);
-
-        assertEquals("Üldine viga", error);
+        assertThat(error, startsWith("Üldine viga"));
     }
 
     @Test
     public void eidas3_eidasAcrValueLowShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
-        Map<String,String> formParams = new HashMap<String,String>();
+        Map<String, String> formParams = new HashMap<String, String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
         formParams.put("client_id", testTaraProperties.getClientId());
@@ -152,7 +153,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas3_eidasAcrValueSubstantialShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
-        Map<String,String> formParams = new HashMap<String,String>();
+        Map<String, String> formParams = new HashMap<String, String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
         formParams.put("client_id", testTaraProperties.getClientId());
@@ -181,7 +182,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas3_eidasAcrValueHighShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
-        Map<String,String> formParams = new HashMap<String,String>();
+        Map<String, String> formParams = new HashMap<String, String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
         formParams.put("client_id", testTaraProperties.getClientId());
@@ -210,7 +211,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas3_eidasAcrValueDefaultShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
-        Map<String,String> formParams = new HashMap<String,String>();
+        Map<String, String> formParams = new HashMap<String, String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
         formParams.put("client_id", testTaraProperties.getClientId());
@@ -238,7 +239,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas3_eidasAcrValueHigherLoaReturnedThanAskedShouldReturnSuccess() throws URISyntaxException, ParseException, JOSEException {
-        Map<String,String> formParams = new HashMap<String,String>();
+        Map<String, String> formParams = new HashMap<String, String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
         formParams.put("client_id", testTaraProperties.getClientId());
@@ -267,7 +268,7 @@ public class EidasTest extends TestsBase {
 
     @Test
     public void eidas3_eidasAcrValueLowerLoaReturnedThanAskedShouldReturnError() throws URISyntaxException, ParseException, JOSEException {
-        Map<String,String> formParams = new HashMap<String,String>();
+        Map<String, String> formParams = new HashMap<String, String>();
         formParams.put("scope", "openid");
         formParams.put("response_type", "code");
         formParams.put("client_id", testTaraProperties.getClientId());
@@ -299,7 +300,7 @@ public class EidasTest extends TestsBase {
         //Here we need to simulate a response from foreign country eIDAS Node
         String samlResponse = getBase64SamlResponseMinimalAttributes(response.getBody().asString(), DEFATTR_FIRST, DEFATTR_FAMILY, DEFATTR_PNO, DEFATTR_DATE, loa);
 
-        String authorizationCode = getAuthorizationCode(returnEidasResponse(samlResponse, "a"+relayState));
+        String authorizationCode = getAuthorizationCode(returnEidasResponse(samlResponse, "a" + relayState));
         SignedJWT signedJWT = verifyTokenAndReturnSignedJwtObject(getIdToken(authorizationCode));
 
         assertEquals("EE30011092212", signedJWT.getJWTClaimsSet().getSubject());
