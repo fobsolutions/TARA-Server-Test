@@ -918,4 +918,24 @@ public abstract class TestsBase {
         return Base64.getEncoder().encodeToString(DigestUtils.sha256(data));
 
     }
+
+    protected String authenticateWithMobileIdInvalidInputError(String mobileNo, String idCode, Integer pollMillis) {
+        String execution = getAuthenticationMethodsPage(OIDC_DEF_SCOPE).getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
+        String error = given()
+                .filter(cookieFilter).relaxedHTTPSValidation()
+                .formParam("execution", execution)
+                .formParam("_eventId", "submit")
+                .formParam("mobileNumber", mobileNo)
+                .formParam("moblang", "et")
+                .formParam("principalCode", idCode)
+                .queryParam("client_id", testTaraProperties.getClientId())
+                .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
+                .when()
+                .post(testTaraProperties.getLoginUrl())
+                .then()
+                .extract().response()
+                .htmlPath().getString("**.findAll { it.@class=='error-box' }");
+
+        return error.substring(4, error.indexOf(":") + 1);
+    }
 }
