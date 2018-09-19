@@ -39,4 +39,22 @@ public class SmartIdTest extends TestsBase {
         String errorMessage = authenticateWithSmartIdPollError("10101010016", 2000);
         assertThat(errorMessage, startsWith("Autentimine katkestati kasutaja poolt."));
     }
+
+    /**
+     * Verifying that proper error message is displayed when user inserts invalid id code
+     */
+    @Test
+    public void smartIdInvalidFormat() throws Exception {
+        String errorMessage = authenticateWithSmartIdInvalidInputPollError("12akl2", 2000);
+        assertEquals("Isikukood on ebakorrektses formaadis.Intsidendi number:", errorMessage);
+    }
+
+    /**
+     * Verifying that proper error message is displayed when user inserts empty id code
+     */
+    @Test
+    public void smartIdEmptyCode() throws Exception {
+        String errorMessage = authenticateWithSmartIdInvalidInputPollError("", 2000);
+        assertEquals("Isikukood puuduIntsidendi number:", errorMessage);
+    }
 }
